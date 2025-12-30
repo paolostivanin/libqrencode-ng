@@ -1,0 +1,13 @@
+@PACKAGE_INIT@
+
+include(CMakeFindDependencyMacro)
+
+if("@QRENCODE_ENABLE_PNG@")
+    find_dependency(PNG)
+endif()
+
+find_dependency(Threads)
+
+include("${CMAKE_CURRENT_LIST_DIR}/qrencode-targets.cmake")
+
+check_required_components(qrencode)
