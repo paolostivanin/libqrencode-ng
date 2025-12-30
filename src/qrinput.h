@@ -22,6 +22,8 @@
 #ifndef QRINPUT_H
 #define QRINPUT_H
 
+#include <stdbool.h>
+#include <stdint.h>
 #include "qrencode.h"
 #include "bitstream.h"
 
@@ -48,8 +50,8 @@ struct _QRinput {
 	QRecLevel level;
 	QRinput_List *head;
 	QRinput_List *tail;
-	int mqr;
-	int fnc1;
+	bool mqr;
+	bool fnc1;
 	unsigned char appid;
 };
 

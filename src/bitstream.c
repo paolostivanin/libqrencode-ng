@@ -34,7 +34,7 @@ BitStream *BitStream_new(void)
 {
 	BitStream *bstream;
 
-	bstream = (BitStream *)malloc(sizeof(BitStream));
+	bstream = (BitStream *)malloc(sizeof(*bstream));
 	if(bstream == NULL) return NULL;
 
 	bstream->length = 0;
@@ -55,7 +55,7 @@ BitStream *BitStream_newWithBits(size_t size, unsigned char *bits)
 
 	if(size == 0) return BitStream_new();
 
-	bstream = (BitStream *)malloc(sizeof(BitStream));
+	bstream = (BitStream *)malloc(sizeof(*bstream));
 	if(bstream == NULL) return NULL;
 
 	bstream->data = (unsigned char *)malloc(size);

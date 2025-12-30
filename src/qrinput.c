@@ -22,6 +22,8 @@
 #if HAVE_CONFIG_H
 # include "config.h"
 #endif
+#include <stdbool.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -54,7 +56,7 @@ static QRinput_List *QRinput_List_newEntry(QRencodeMode mode, int size, const un
 		return NULL;
 	}
 
-	entry = (QRinput_List *)malloc(sizeof(QRinput_List));
+	entry = (QRinput_List *)malloc(sizeof(*entry));
 	if(entry == NULL) return NULL;
 
 	entry->mode = mode;
@@ -129,8 +131,8 @@ QRinput *QRinput_new2(int version, QRecLevel level)
 	input->tail = NULL;
 	input->version = version;
 	input->level = level;
-	input->mqr = 0;
-	input->fnc1 = 0;
+	input->mqr = false;
+	input->fnc1 = false;
 
 	return input;
 }
@@ -145,7 +147,7 @@ QRinput *QRinput_newMQR(int version, QRecLevel level)
 	input = QRinput_new2(version, level);
 	if(input == NULL) return NULL;
 
-	input->mqr = 1;
+	input->mqr = true;
 
 	return input;
 
@@ -1621,7 +1623,7 @@ int QRinput_setFNC1First(QRinput *input)
 		errno = EINVAL;
 		return -1;
 	}
-	input->fnc1 = 1;
+	input->fnc1 = true;
 
 	return 0;
 }
@@ -1632,7 +1634,7 @@ int QRinput_setFNC1Second(QRinput *input, unsigned char appid)
 		errno = EINVAL;
 		return -1;
 	}
-	input->fnc1 = 2;
+	input->fnc1 = true;
 	input->appid = appid;
 
 	return 0;

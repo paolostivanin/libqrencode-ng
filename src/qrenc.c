@@ -28,6 +28,8 @@
 #include <getopt.h>
 #include <errno.h>
 #if HAVE_PNG
+#include <stdbool.h>
+#include <stdint.h>
 #include <png.h>
 #endif
 
@@ -36,16 +38,16 @@
 
 #define INCHES_PER_METER (100.0/2.54)
 
-static int casesensitive = 1;
-static int eightbit = 0;
+static bool casesensitive = true;
+static bool eightbit = false;
 static int version = 0;
 static int size = 3;
 static int margin = -1;
 static int dpi = 72;
-static int structured = 0;
+static bool structured = false;
 static int rle = 0;
 static int svg_path = 0;
-static int micro = 0;
+static bool micro = false;
 static int inline_svg = 0;
 static int strict_versioning = 0;
 static QRecLevel level = QR_ECLEVEL_L;
@@ -788,30 +790,30 @@ static int writeANSI(const QRcode *qrcode, const char *outfile)
 		memset(buffer, 0, (size_t)buffer_s);
 		strncpy(buffer, white, (size_t)white_s);
 		for(x = 0; x < margin; x++ ){
-			strncat(buffer, "  ", 2);
+			strcat(buffer, "  ");
 		}
 		last = 0;
 
 		for(x = 0; x < qrcode->width; x++) {
 			if(*(row+x)&0x1) {
 				if( last != 1 ){
-					strncat(buffer, black, (size_t)black_s);
+					strcat(buffer, black);
 					last = 1;
 				}
 			} else if( last != 0 ){
-				strncat(buffer, white, (size_t)white_s);
+				strcat(buffer, white);
 				last = 0;
 			}
-			strncat(buffer, "  ", 2);
+			strcat(buffer, "  ");
 		}
 
 		if( last != 0 ){
-			strncat(buffer, white, (size_t)white_s);
+			strcat(buffer, white);
 		}
 		for(x = 0; x < margin; x++ ){
-			strncat(buffer, "  ", 2);
+			strcat(buffer, "  ");
 		}
-		strncat(buffer, "\033[0m\n", 5);
+		strcat(buffer, "\033[0m\n");
 		fputs(buffer, fp);
 	}
 
@@ -838,7 +840,7 @@ static void writeUTF8_margin(FILE* fp, int realwidth, const char* white,
 	}
 }
 
-static int writeUTF8(const QRcode *qrcode, const char *outfile, int use_ansi, int invert)
+static int writeUTF8(const QRcode *qrcode, const char *outfile, bool use_ansi, bool invert)
 {
 	FILE *fp;
 	int x, y;
@@ -923,7 +925,7 @@ static int writeUTF8(const QRcode *qrcode, const char *outfile, int use_ansi, in
 	return 0;
 }
 
-static void writeASCII_margin(FILE* fp, int realwidth, char* buffer, int invert)
+static void writeASCII_margin(FILE* fp, int realwidth, char* buffer, bool invert)
 {
 	int y, h;
 
@@ -937,7 +939,7 @@ static void writeASCII_margin(FILE* fp, int realwidth, char* buffer, int invert)
 	}
 }
 
-static int writeASCII(const QRcode *qrcode, const char *outfile, int invert)
+static int writeASCII(const QRcode *qrcode, const char *outfile, bool invert)
 {
 	FILE *fp;
 	unsigned char *row;
@@ -1346,22 +1348,22 @@ int main(int argc, char **argv)
 				}
 				break;
 			case 'S':
-				structured = 1;
+				structured = true;
 				break;
 			case 'k':
 				hint = QR_MODE_KANJI;
 				break;
 			case 'c':
-				casesensitive = 1;
+				casesensitive = true;
 				break;
 			case 'i':
-				casesensitive = 0;
+				casesensitive = false;
 				break;
 			case '8':
-				eightbit = 1;
+				eightbit = true;
 				break;
 			case 'M':
-				micro = 1;
+				micro = true;
 				break;
 			case 'f':
 				if(color_set(fg_color, optarg)) {

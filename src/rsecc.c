@@ -28,6 +28,8 @@
 #endif
 #include <stdlib.h>
 #include <string.h>
+#include <stdbool.h>
+#include <assert.h>
 #if HAVE_LIBPTHREAD
 #include <pthread.h>
 #endif
@@ -38,7 +40,7 @@
 static pthread_mutex_t RSECC_mutex = PTHREAD_MUTEX_INITIALIZER;
 #endif
 
-static int initialized = 0;
+static bool initialized = false;
 
 #define SYMBOL_SIZE (8)
 #define symbols ((1U << SYMBOL_SIZE) - 1)
@@ -49,10 +51,13 @@ static const unsigned int proot = 0x11d; /* stands for x^8+x^4+x^3+x^2+1 (see pp
 #define max_length (30)
 #define max_generatorSize (max_length)
 
+static_assert(SYMBOL_SIZE == 8, "SYMBOL_SIZE must be 8");
+static_assert(max_length >= min_length, "max_length must be >= min_length");
+
 static unsigned char alpha[symbols + 1];
 static unsigned char aindex[symbols + 1];
 static unsigned char generator[max_length - min_length + 1][max_generatorSize + 1];
-static unsigned char generatorInitialized[max_length - min_length + 1];
+static bool generatorInitialized[max_length - min_length + 1];
 
 static void RSECC_initLookupTable(void)
 {
@@ -76,8 +81,10 @@ static void RSECC_initLookupTable(void)
 static void RSECC_init(void)
 {
 	RSECC_initLookupTable();
-	memset(generatorInitialized, 0, (max_length - min_length + 1));
-	initialized = 1;
+	for(int i=0; i < (max_length - min_length + 1); i++) {
+		generatorInitialized[i] = false;
+	}
+	initialized = true;
 }
 
 static void generator_init(size_t length)
@@ -99,7 +106,7 @@ static void generator_init(size_t length)
 		generator[length - min_length][i] = aindex[g[i]];
 	}
 
-	generatorInitialized[length - min_length] = 1;
+	generatorInitialized[length - min_length] = true;
 }
 
 int RSECC_encode(size_t data_length, size_t ecc_length, const unsigned char *data, unsigned char *ecc)

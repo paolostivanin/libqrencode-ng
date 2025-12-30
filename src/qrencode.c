@@ -21,6 +21,8 @@
 #if HAVE_CONFIG_H
 # include "config.h"
 #endif
+#include <stdbool.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -410,7 +412,7 @@ STATIC_IN_RELEASE QRcode *QRcode_new(int version, int width, unsigned char *data
 {
 	QRcode *qrcode;
 
-	qrcode = (QRcode *)malloc(sizeof(QRcode));
+	qrcode = (QRcode *)malloc(sizeof(*qrcode));
 	if(qrcode == NULL) return NULL;
 
 	qrcode->version = version;
@@ -613,7 +615,7 @@ QRcode *QRcode_encodeInput(QRinput *input)
 	}
 }
 
-static QRcode *QRcode_encodeStringReal(const char *string, int version, QRecLevel level, int mqr, QRencodeMode hint, int casesensitive)
+static QRcode *QRcode_encodeStringReal(const char *string, int version, QRecLevel level, int mqr, QRencodeMode hint, bool casesensitive)
 {
 	QRinput *input;
 	QRcode *code;
@@ -646,12 +648,12 @@ static QRcode *QRcode_encodeStringReal(const char *string, int version, QRecLeve
 	return code;
 }
 
-QRcode *QRcode_encodeString(const char *string, int version, QRecLevel level, QRencodeMode hint, int casesensitive)
+QRcode *QRcode_encodeString(const char *string, int version, QRecLevel level, QRencodeMode hint, bool casesensitive)
 {
 	return QRcode_encodeStringReal(string, version, level, 0, hint, casesensitive);
 }
 
-QRcode *QRcode_encodeStringMQR(const char *string, int version, QRecLevel level, QRencodeMode hint, int casesensitive)
+QRcode *QRcode_encodeStringMQR(const char *string, int version, QRecLevel level, QRencodeMode hint, bool casesensitive)
 {
 	int i;
 
@@ -752,7 +754,7 @@ static QRcode_List *QRcode_List_newEntry(void)
 {
 	QRcode_List *entry;
 
-	entry = (QRcode_List *)malloc(sizeof(QRcode_List));
+	entry = (QRcode_List *)malloc(sizeof(*entry));
 	if(entry == NULL) return NULL;
 
 	entry->next = NULL;
@@ -856,7 +858,7 @@ static QRcode_List *QRcode_encodeInputToStructured(QRinput *input)
 static QRcode_List *QRcode_encodeDataStructuredReal(
 	int size, const unsigned char *data,
 	int version, QRecLevel level,
-	int eightbit, QRencodeMode hint, int casesensitive)
+	int eightbit, QRencodeMode hint, bool casesensitive)
 {
 	QRinput *input;
 	QRcode_List *codes;
@@ -890,7 +892,7 @@ static QRcode_List *QRcode_encodeDataStructuredReal(
 }
 
 QRcode_List *QRcode_encodeDataStructured(int size, const unsigned char *data, int version, QRecLevel level) {
-	return QRcode_encodeDataStructuredReal(size, data, version, level, 1, QR_MODE_NUL, 0);
+	return QRcode_encodeDataStructuredReal(size, data, version, level, 1, QR_MODE_NUL, false);
 }
 
 QRcode_List *QRcode_encodeString8bitStructured(const char *string, int version, QRecLevel level) {
@@ -901,7 +903,7 @@ QRcode_List *QRcode_encodeString8bitStructured(const char *string, int version, 
 	return QRcode_encodeDataStructured((int)strlen(string), (unsigned char *)string, version, level);
 }
 
-QRcode_List *QRcode_encodeStringStructured(const char *string, int version, QRecLevel level, QRencodeMode hint, int casesensitive)
+QRcode_List *QRcode_encodeStringStructured(const char *string, int version, QRecLevel level, QRencodeMode hint, bool casesensitive)
 {
 	if(string == NULL) {
 		errno = EINVAL;

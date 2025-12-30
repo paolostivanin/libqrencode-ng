@@ -6,6 +6,10 @@ project(libqrencode-ng
     LANGUAGES C
 )
 
+set(CMAKE_C_STANDARD 11)
+set(CMAKE_C_STANDARD_REQUIRED ON)
+set(CMAKE_C_EXTENSIONS ON)
+
 # Project options
 option(QRENCODE_BUILD_TOOLS "Build utility tools" ON)
 option(QRENCODE_BUILD_TESTS "Build tests" OFF)

@@ -99,6 +99,9 @@
 #ifndef QRENCODE_H
 #define QRENCODE_H
 
+#include <stdbool.h>
+#include <stdint.h>
+
 #if defined(__cplusplus)
 extern "C" {
 #endif
@@ -423,7 +426,7 @@ extern QRcode *QRcode_encodeInput(QRinput *input);
  * @throw ENOMEM unable to allocate memory for input objects.
  * @throw ERANGE input data is too large.
  */
-extern QRcode *QRcode_encodeString(const char *string, int version, QRecLevel level, QRencodeMode hint, int casesensitive);
+extern QRcode *QRcode_encodeString(const char *string, int version, QRecLevel level, QRencodeMode hint, bool casesensitive);
 
 /**
  * Same to QRcode_encodeString(), but encode whole data in 8-bit mode.
@@ -435,7 +438,7 @@ extern QRcode *QRcode_encodeString8bit(const char *string, int version, QRecLeve
  * Micro QR Code version of QRcode_encodeString().
  * @warning This function is THREAD UNSAFE when pthread is disabled.
  */
-extern QRcode *QRcode_encodeStringMQR(const char *string, int version, QRecLevel level, QRencodeMode hint, int casesensitive);
+extern QRcode *QRcode_encodeStringMQR(const char *string, int version, QRecLevel level, QRencodeMode hint, bool casesensitive);
 
 /**
  * Micro QR Code version of QRcode_encodeString8bit().
@@ -496,7 +499,7 @@ extern QRcode_List *QRcode_encodeInputStructured(QRinput_Struct *s);
  * @throw EINVAL invalid input object.
  * @throw ENOMEM unable to allocate memory for input objects.
  */
-extern QRcode_List *QRcode_encodeStringStructured(const char *string, int version, QRecLevel level, QRencodeMode hint, int casesensitive);
+extern QRcode_List *QRcode_encodeStringStructured(const char *string, int version, QRecLevel level, QRencodeMode hint, bool casesensitive);
 
 /**
  * Same to QRcode_encodeStringStructured(), but encode whole data in 8-bit mode.
