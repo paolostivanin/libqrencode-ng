@@ -45,47 +45,24 @@ tests and/or tools if you want not to install programs using SDL or PNG.
 
 Compile & install
 -----------------
-If there is no "configure" script in the source code directory, run
-"autogen.sh" at first to generate it - this is mandatory if you downloaded the
-source from GitHub. Some additional software is needed to complete this
-process. For example, in Ubuntu, the following packages are needed:
-
-- autoconf
-- automake
-- autotools-dev
-- libtool
-- pkg-config
-- libpng12-dev
-
-You can skip this process if you have "configure" script already (typically
-when you downloaded the source tarball from fukuchi.org.)
 
 Now you are ready to compile the library and tool. Type the following commands:
 
 ```
-./configure
+cmake .
 make
 sudo make install
-sudo ldconfig
 ```
 
 This compiles and installs the library and header file to the appropriate
 directories: by default, /usr/local/lib and /usr/local/include. You can change
-the destination directory by passing some options to the configure script.
-Run "./configure --help" to see the list of options.
+the destination directory by passing some options to the cmake command.
+Run "cmake -LH" to see the list of options.
 
 It also installs a command line tool "qrencode" to /usr/local/bin. If you want
-not to build it, give "--without-tools" option to the configure script.
+not to build it, give "-DQRENCODE_BUILD_TOOLS=OFF" option to the cmake command.
 
-If the configure script does not work well, try to use CMake.
-
-```
-cmake .
-make
-```
-
-When you want to build the test programs, give "--with-tests" option to
-configure, or "-DWITH\_TESTS=YES" to cmake.
+When you want to build the test programs, give "-DQRENCODE_BUILD_TESTS=ON" to cmake.
 
 ### Building libqrencode with vcpkg
 

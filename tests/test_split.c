@@ -2,11 +2,11 @@
 #include <string.h>
 #include <stdarg.h>
 #include "common.h"
-#include "../qrspec.h"
-#include "../qrinput.h"
-#include "../mask.h"
-#include "../split.h"
-#include "../bitstream.h"
+#include "qrspec.h"
+#include "qrinput.h"
+#include "mask.h"
+#include "split.h"
+#include "bitstream.h"
 
 static int inputTest(QRinput_List *list, const char *fmt, ...)
 {

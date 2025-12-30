@@ -4,11 +4,11 @@
 #include <SDL.h>
 #include <getopt.h>
 #include <errno.h>
-#include "../config.h"
-#include "../qrspec.h"
-#include "../qrinput.h"
-#include "../split.h"
-#include "../qrencode_inner.h"
+#include "config.h"
+#include "qrspec.h"
+#include "qrinput.h"
+#include "split.h"
+#include "qrencode_inner.h"
 
 static SDL_Window *window;
 static SDL_Renderer *renderer;

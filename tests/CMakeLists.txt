@@ -53,11 +53,11 @@ if(TARGET ICONV::ICONV)
         decoder.c decoder.h 
         datachunk.c datachunk.h 
         rsecc_decoder.c rsecc_decoder.h)
-    target_link_libraries(decoder ICONV::ICONV)
+    target_link_libraries(decoder qrencode ICONV::ICONV)
 
     MAKE_TEST(test_qrinput decoder)
     MAKE_TEST(test_qrspec decoder)
-    target_compile_definitions(test_qrspec PRIVATE -DSRCDIR="${CMAKE_CURRENT_SOURCE_DIR}/")
+    target_compile_definitions(test_qrspec PRIVATE SRCDIR="${CMAKE_CURRENT_SOURCE_DIR}/")
     MAKE_TEST(test_mqrspec decoder)
     MAKE_TEST(test_qrencode decoder)
     MAKE_TEST(test_split_urls decoder)

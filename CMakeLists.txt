@@ -113,13 +113,14 @@ target_include_directories(qrencode
 )
 
 target_compile_definitions(qrencode
-    PRIVATE
+    PUBLIC
         MAJOR_VERSION=${PROJECT_VERSION_MAJOR}
         MINOR_VERSION=${PROJECT_VERSION_MINOR}
         MICRO_VERSION=${PROJECT_VERSION_PATCH}
         VERSION="${PROJECT_VERSION}"
-        HAVE_SDL=0
         $<$<BOOL:${QRENCODE_BUILD_TESTS}>:WITH_TESTS>
+    PRIVATE
+        HAVE_SDL=0
         $<$<NOT:$<BOOL:${QRENCODE_BUILD_TESTS}>>:STATIC_IN_RELEASE=static>
         $<$<BOOL:${QRENCODE_BUILD_TESTS}>:STATIC_IN_RELEASE=>
         $<$<BOOL:${HAVE_STRDUP}>:HAVE_STRDUP=1>

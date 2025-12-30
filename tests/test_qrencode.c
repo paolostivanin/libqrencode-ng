@@ -2,13 +2,13 @@
 #include <string.h>
 #include <errno.h>
 #include "common.h"
-#include "../qrencode_inner.h"
-#include "../qrspec.h"
-#include "../mqrspec.h"
-#include "../qrinput.h"
-#include "../mask.h"
-#include "../rsecc.h"
-#include "../split.h"
+#include "qrencode_inner.h"
+#include "qrspec.h"
+#include "mqrspec.h"
+#include "qrinput.h"
+#include "mask.h"
+#include "rsecc.h"
+#include "split.h"
 #include "decoder.h"
 
 static const char decodeAnTable[45] = {

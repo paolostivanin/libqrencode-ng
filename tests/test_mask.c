@@ -1,8 +1,8 @@
 #include <stdio.h>
 #include <string.h>
 #include "common.h"
-#include "../mask.h"
-#include "../qrspec.h"
+#include "mask.h"
+#include "qrspec.h"
 #include "decoder.h"
 
 static char dot[2] = {'_', '#'};

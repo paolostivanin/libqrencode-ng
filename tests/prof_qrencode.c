@@ -1,13 +1,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #if HAVE_CONFIG_H
-#include "../config.h"
+#include "config.h"
 #endif
 #ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
 #endif
 #include <errno.h>
-#include "../qrencode.h"
+#include "qrencode.h"
 
 #ifdef _MSC_VER
 #define WIN32_LEAN_AND_MEAN

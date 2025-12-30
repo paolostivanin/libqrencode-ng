@@ -1,11 +1,11 @@
 #include <stdio.h>
 #include <string.h>
 #include "common.h"
-#include "../qrencode_inner.h"
-#include "../qrspec.h"
-#include "../mqrspec.h"
-#include "../qrinput.h"
-#include "../rsecc.h"
+#include "qrencode_inner.h"
+#include "qrspec.h"
+#include "mqrspec.h"
+#include "qrinput.h"
+#include "rsecc.h"
 #include "decoder.h"
 #include "rsecc_decoder.h"
 #include "rscode.h"

@@ -2,9 +2,9 @@
 #include <string.h>
 #include <errno.h>
 #include "common.h"
-#include "../qrinput.h"
-#include "../split.h"
-#include "../qrspec.h"
+#include "qrinput.h"
+#include "split.h"
+#include "qrspec.h"
 #include "decoder.h"
 
 #define MAX_LENGTH 7091

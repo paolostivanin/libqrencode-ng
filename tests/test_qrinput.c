@@ -2,9 +2,9 @@
 #include <string.h>
 #include <errno.h>
 #include "common.h"
-#include "../qrinput.h"
-#include "../qrencode_inner.h"
-#include "../split.h"
+#include "qrinput.h"
+#include "qrencode_inner.h"
+#include "split.h"
 #include "decoder.h"
 
 /* taken from the Table 7 of JIS X0510:2018 (pp. 31-34) */

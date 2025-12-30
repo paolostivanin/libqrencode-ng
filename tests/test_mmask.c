@@ -1,8 +1,8 @@
 #include <stdio.h>
 #include <string.h>
 #include "common.h"
-#include "../mmask.h"
-#include "../mqrspec.h"
+#include "mmask.h"
+#include "mqrspec.h"
 
 static char dot[2] = {'_', '#'};
 static char *maskPatterns[4] = {

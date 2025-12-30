@@ -7,12 +7,12 @@
 
 #include <stdlib.h>
 #if HAVE_CONFIG_H
-#include "../config.h"
+#include "config.h"
 #endif
-#include "../qrencode.h"
-#include "../qrinput.h"
-#include "../bitstream.h"
-#include "../qrencode_inner.h"
+#include "qrencode.h"
+#include "qrinput.h"
+#include "bitstream.h"
+#include "qrencode_inner.h"
 
 extern int assertionFailed;
 extern int assertionNum;

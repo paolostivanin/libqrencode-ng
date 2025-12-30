@@ -1,7 +1,7 @@
 #ifndef DATACHUNK_H
 #define DATACHUNK_H
 
-#include "../qrencode.h"
+#include "qrencode.h"
 
 typedef struct _DataChunk {
 	QRencodeMode mode;

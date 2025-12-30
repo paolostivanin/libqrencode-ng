@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "common.h"
-#include "../qrinput.h"
+#include "qrinput.h"
 
 static QRinput *gstream;
 

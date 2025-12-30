@@ -3,13 +3,13 @@
 #include <string.h>
 #include <iconv.h>
 #if HAVE_CONFIG_H
-#include "../config.h"
+#include "config.h"
 #endif
-#include "../qrspec.h"
-#include "../bitstream.h"
-#include "../mask.h"
-#include "../mqrspec.h"
-#include "../mmask.h"
+#include "qrspec.h"
+#include "bitstream.h"
+#include "mask.h"
+#include "mqrspec.h"
+#include "mmask.h"
 #include "common.h"
 #include "decoder.h"
 

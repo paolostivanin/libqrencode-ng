@@ -11,7 +11,7 @@
 #include <string.h>
 #include <png.h>
 #include "common.h"
-#include "../mqrspec.h"
+#include "mqrspec.h"
 
 void append_pattern(int version, FILE *fp)
 {

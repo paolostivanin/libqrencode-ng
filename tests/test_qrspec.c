@@ -1,8 +1,8 @@
 #include <stdio.h>
 #include <string.h>
 #include "common.h"
-#include "../qrspec.h"
-#include "../qrencode_inner.h"
+#include "qrspec.h"
+#include "qrencode_inner.h"
 #include "decoder.h"
 
 #ifndef SRCDIR

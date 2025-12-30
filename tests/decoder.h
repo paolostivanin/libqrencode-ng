@@ -1,7 +1,7 @@
 #ifndef DECODER_H
 #define DECODER_H
 
-#include "../qrencode.h"
+#include "qrencode.h"
 #include "datachunk.h"
 
 typedef struct {

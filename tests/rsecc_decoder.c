@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "../qrspec.h"
+#include "qrspec.h"
 #include "rsecc_decoder.h"
 
 #define SYMBOL_SIZE (8)
