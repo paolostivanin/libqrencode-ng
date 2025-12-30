@@ -176,7 +176,7 @@ Copyright (C) 2002, 2003, 2004, 2006 Phil Karn, KA9Q
 * Michał Górny (@mgorny)
                         - reverse mappings of UTF8 and ANSIUTF8, build script
                           fixes
-* @EckoEdc              - MinGW support patch
+* @EckoEdc              - Various fixes
 * Sebastian Buchwald (@UniQP)
                         - Various code cleanups
 * André Klitzing (@misery)
@@ -196,7 +196,7 @@ Copyright (C) 2002, 2003, 2004, 2006 Phil Karn, KA9Q
 * @4061N                - performance improvement patch
 * Rosen Penev (@neheb)  - CMake bug fix patch
 * Mika Lindqvist (@mtl1979)
-                        - replacement for gettimeofday() for Windows.
+                        - bug fix patch
 * Shigeyuki Hirai, Paul Janssens, wangsai, Gavan Fantom, Matthew Baker,
   Rob Ryan, Fred Steinhaeuser, Terry Burton, @chisj, @vlad417, Petr,
   Hassan Hajji, Emmanuel Blot, ßlúèÇhîp, Heiko Becker, Gavin Andresen,

@@ -98,11 +98,6 @@ if(QRENCODE_BUILD_SHARED)
         VERSION ${PROJECT_VERSION}
         SOVERSION ${PROJECT_VERSION_MAJOR}
     )
-    if(MSVC)
-        set_target_properties(qrencode PROPERTIES
-            WINDOWS_EXPORT_ALL_SYMBOLS ON
-        )
-    endif()
 else()
     add_library(qrencode STATIC ${QRENCODE_SOURCES} ${QRENCODE_HEADERS})
 endif()
@@ -158,19 +153,6 @@ if(CMAKE_USE_PTHREADS_INIT)
     target_link_libraries(qrencode PUBLIC Threads::Threads)
 endif()
 
-# MSVC specific
-if(MSVC)
-    target_compile_definitions(qrencode
-        PRIVATE
-            strcasecmp=_stricmp
-            strncasecmp=_strnicmp
-            _CRT_SECURE_NO_WARNINGS
-            _CRT_NONSTDC_NO_DEPRECATE
-    )
-    set_target_properties(qrencode PROPERTIES
-        DEBUG_POSTFIX "d"
-    )
-endif()
 
 # ============================================================================
 # Command-line tool (qrenc -> qrencode)
@@ -187,16 +169,6 @@ if(QRENCODE_BUILD_TOOLS)
         target_link_libraries(qrenc PRIVATE PNG::PNG)
     endif()
     
-    if(MSVC AND NOT HAVE_GETOPT_H)
-        find_path(GETOPT_INCLUDE_DIR getopt.h PATH_SUFFIXES include)
-        find_library(GETOPT_LIBRARIES getopt PATH_SUFFIXES lib)
-        if(GETOPT_INCLUDE_DIR AND GETOPT_LIBRARIES)
-            target_include_directories(qrenc PRIVATE ${GETOPT_INCLUDE_DIR})
-            target_link_libraries(qrenc PRIVATE ${GETOPT_LIBRARIES})
-        else()
-            message(WARNING "getopt not found on MSVC, qrenc tool may not build correctly")
-        endif()
-    endif()
 endif()
 
 # ============================================================================

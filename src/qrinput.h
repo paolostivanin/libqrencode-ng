@@ -51,7 +51,7 @@ struct _QRinput {
 	QRinput_List *head;
 	QRinput_List *tail;
 	bool mqr;
-	bool fnc1;
+	int fnc1;
 	unsigned char appid;
 };
 

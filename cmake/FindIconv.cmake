@@ -14,12 +14,10 @@ endif()
 
 # Normal search.
 set(_ICONV_SEARCH_NORMAL
-    PATHS "[HKEY_LOCAL_MACHINE\\SOFTWARE\\GnuWin32\\Iconv;InstallPath]"
-          "$ENV{PROGRAMFILES}/iconv"
-          ENV CPATH
-          ENV C_INCLUDE_PATH
-          ENV CPLUS_INCLUDE_PATH
-          ENV LIBRARY_PATH)
+    ENV CPATH
+    ENV C_INCLUDE_PATH
+    ENV CPLUS_INCLUDE_PATH
+    ENV LIBRARY_PATH)
 list(APPEND _ICONV_SEARCHES _ICONV_SEARCH_NORMAL)
 
 set(ICONV_NAMES iconv iconv2 libiconv iconv64)

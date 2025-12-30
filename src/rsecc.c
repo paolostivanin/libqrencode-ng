@@ -30,6 +30,7 @@
 #include <string.h>
 #include <stdbool.h>
 #include <assert.h>
+#include <stdatomic.h>
 #if HAVE_LIBPTHREAD
 #include <pthread.h>
 #endif
@@ -40,7 +41,7 @@
 static pthread_mutex_t RSECC_mutex = PTHREAD_MUTEX_INITIALIZER;
 #endif
 
-static bool initialized = false;
+static _Atomic bool initialized = false;
 
 #define SYMBOL_SIZE (8)
 #define symbols ((1U << SYMBOL_SIZE) - 1)
