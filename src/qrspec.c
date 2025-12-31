@@ -32,6 +32,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+#include <limits.h>
 
 #include "qrspec.h"
 #include "qrinput.h"
@@ -426,15 +427,21 @@ static void putFinderPattern(unsigned char *frame, int width, int ox, int oy)
 static unsigned char *QRspec_createFrame(int version)
 {
 	unsigned char *frame, *p, *q;
+	size_t frame_size;
 	int width;
 	int x, y;
 	unsigned int verinfo, v;
 
+	if(version < 1 || version > QRSPEC_VERSION_MAX) return NULL;
+
 	width = qrspecCapacity[version].width;
-	frame = (unsigned char *)malloc((size_t)(width * width));
+	if(width < 21) return NULL;
+	if((size_t)width > SIZE_MAX / (size_t)width) return NULL;
+	frame_size = (size_t)width * (size_t)width;
+	frame = (unsigned char *)malloc(frame_size);
 	if(frame == NULL) return NULL;
 
-	memset(frame, 0, (size_t)(width * width));
+	memset(frame, 0, frame_size);
 	/* Finder pattern */
 	putFinderPattern(frame, width, 0, 0);
 	putFinderPattern(frame, width, width - 7, 0);

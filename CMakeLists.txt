@@ -14,7 +14,7 @@ set(CMAKE_C_EXTENSIONS ON)
 option(QRENCODE_BUILD_TOOLS "Build utility tools" ON)
 option(QRENCODE_BUILD_TESTS "Build tests" OFF)
 option(QRENCODE_ENABLE_PNG "Enable PNG support" ON)
-option(QRENCODE_BUILD_SHARED "Build shared library" OFF)
+option(QRENCODE_BUILD_SHARED "Build shared library" ON)
 
 # Security and debugging options
 option(QRENCODE_ENABLE_ASAN "Enable AddressSanitizer for memory error detection" OFF)
