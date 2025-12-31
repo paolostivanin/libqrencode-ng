@@ -27,6 +27,7 @@
 #include <string.h>
 #include <getopt.h>
 #include <errno.h>
+#include <limits.h>
 #if HAVE_PNG
 #include <stdbool.h>
 #include <stdint.h>
@@ -104,6 +105,75 @@ static const struct option options[] = {
 };
 
 static char *optstring = "ho:r:l:s:v:m:d:t:Skci8MV";
+
+static void append_to_buffer(char *buffer, size_t buffer_size, size_t *offset, const char *text)
+{
+	size_t text_len;
+
+	text_len = strlen(text);
+	if (*offset >= buffer_size || text_len > buffer_size - *offset - 1) {
+		fprintf(stderr, "ANSI output buffer is too small.\n");
+		exit(EXIT_FAILURE);
+	}
+
+	memcpy(buffer + *offset, text, text_len);
+	*offset += text_len;
+	buffer[*offset] = '\0';
+}
+
+static void append_repeat_to_buffer(char *buffer, size_t buffer_size, size_t *offset, char fill, size_t count)
+{
+	if (*offset >= buffer_size || count > buffer_size - *offset - 1) {
+		fprintf(stderr, "ANSI output buffer is too small.\n");
+		exit(EXIT_FAILURE);
+	}
+
+	memset(buffer + *offset, fill, count);
+	*offset += count;
+	buffer[*offset] = '\0';
+}
+
+static size_t checked_size_add(size_t left, size_t right)
+{
+	if (left > SIZE_MAX - right) {
+		fprintf(stderr, "ANSI output size overflow.\n");
+		exit(EXIT_FAILURE);
+	}
+	return left + right;
+}
+
+static size_t checked_size_mul(size_t left, size_t right)
+{
+	if (left != 0 && right > SIZE_MAX / left) {
+		fprintf(stderr, "ANSI output size overflow.\n");
+		exit(EXIT_FAILURE);
+	}
+	return left * right;
+}
+
+static size_t ansi_line_buffer_size(size_t qrcode_width, size_t margin_size, size_t white_len, size_t black_len,
+                                    size_t reset_len)
+{
+	size_t color_max;
+	size_t margin_spaces;
+	size_t per_module;
+	size_t modules_len;
+	size_t line_len;
+
+	color_max = white_len > black_len ? white_len : black_len;
+	margin_spaces = checked_size_mul(margin_size, 2);
+	per_module = checked_size_add(color_max, 2);
+	modules_len = checked_size_mul(qrcode_width, per_module);
+
+	line_len = white_len;
+	line_len = checked_size_add(line_len, margin_spaces);
+	line_len = checked_size_add(line_len, modules_len);
+	line_len = checked_size_add(line_len, color_max);
+	line_len = checked_size_add(line_len, margin_spaces);
+	line_len = checked_size_add(line_len, reset_len);
+
+	return checked_size_add(line_len, 1);
+}
 
 static void usage(int help, int longopt, int status)
 {
@@ -729,14 +799,17 @@ static int writeXPM(const QRcode *qrcode, const char *outfile)
 	return 0;
 }
 
-static void writeANSI_margin(FILE* fp, int realwidth,
-                             char* buffer, const char* white, int white_s )
+static void writeANSI_margin(FILE* fp, int realwidth, char* buffer, size_t buffer_s,
+                             const char* white, const char *reset)
 {
 	int y;
+	size_t offset;
 
-	strncpy(buffer, white, (size_t)white_s);
-	memset(buffer + white_s, ' ', (size_t)realwidth * 2);
-	strcpy(buffer + white_s + realwidth * 2, "\033[0m\n"); // reset to default colors
+	offset = 0;
+	buffer[0] = '\0';
+	append_to_buffer(buffer, buffer_s, &offset, white);
+	append_repeat_to_buffer(buffer, buffer_s, &offset, ' ', checked_size_mul((size_t)realwidth, 2));
+	append_to_buffer(buffer, buffer_s, &offset, reset); // reset to default colors
 	for(y = 0; y < margin; y++ ){
 		fputs(buffer, fp);
 	}
@@ -752,7 +825,10 @@ static int writeANSI(const QRcode *qrcode, const char *outfile)
 
 	const char *white, *black;
 	char *buffer;
-	int white_s, black_s, buffer_s;
+	size_t white_s, black_s, buffer_s;
+	size_t margin_size;
+	size_t offset;
+	const char *reset;
 
 	if(image_type == ANSI256_TYPE){
 		/* codes for 256 color compatible terminals */
@@ -768,11 +844,21 @@ static int writeANSI(const QRcode *qrcode, const char *outfile)
 	}
 
 	size = 1;
+	reset = "\033[0m\n";
 
 	fp = openFile(outfile);
 
 	realwidth = (qrcode->width + margin * 2) * size;
-	buffer_s = (realwidth * white_s) * 2;
+	if (realwidth < 0) {
+		fprintf(stderr, "Invalid margin size.\n");
+		exit(EXIT_FAILURE);
+	}
+	margin_size = margin > 0 ? (size_t)margin : 0;
+	buffer_s = ansi_line_buffer_size((size_t)qrcode->width, margin_size, white_s, black_s, strlen(reset));
+	if (buffer_s == 0) {
+		fprintf(stderr, "Invalid buffer size calculation.\n");
+		exit(EXIT_FAILURE);
+	}
 	buffer = (char *)malloc((size_t)buffer_s);
 	if(buffer == NULL) {
 		fprintf(stderr, "Failed to allocate memory.\n");
@@ -780,45 +866,42 @@ static int writeANSI(const QRcode *qrcode, const char *outfile)
 	}
 
 	/* top margin */
-	writeANSI_margin(fp, realwidth, buffer, white, white_s);
+	writeANSI_margin(fp, realwidth, buffer, buffer_s, white, reset);
 
 	/* data */
 	p = qrcode->data;
 	for(y = 0; y < qrcode->width; y++) {
 		row = (p+(y*qrcode->width));
 
-		memset(buffer, 0, (size_t)buffer_s);
-		strncpy(buffer, white, (size_t)white_s);
-		for(x = 0; x < margin; x++ ){
-			strcat(buffer, "  ");
-		}
+		offset = 0;
+		buffer[0] = '\0';
+		append_to_buffer(buffer, buffer_s, &offset, white);
+		append_repeat_to_buffer(buffer, buffer_s, &offset, ' ', checked_size_mul(margin_size, 2));
 		last = 0;
 
 		for(x = 0; x < qrcode->width; x++) {
 			if(*(row+x)&0x1) {
 				if( last != 1 ){
-					strcat(buffer, black);
+					append_to_buffer(buffer, buffer_s, &offset, black);
 					last = 1;
 				}
 			} else if( last != 0 ){
-				strcat(buffer, white);
+				append_to_buffer(buffer, buffer_s, &offset, white);
 				last = 0;
 			}
-			strcat(buffer, "  ");
+			append_repeat_to_buffer(buffer, buffer_s, &offset, ' ', 2);
 		}
 
 		if( last != 0 ){
-			strcat(buffer, white);
+			append_to_buffer(buffer, buffer_s, &offset, white);
 		}
-		for(x = 0; x < margin; x++ ){
-			strcat(buffer, "  ");
-		}
-		strcat(buffer, "\033[0m\n");
+		append_repeat_to_buffer(buffer, buffer_s, &offset, ' ', checked_size_mul(margin_size, 2));
+		append_to_buffer(buffer, buffer_s, &offset, reset);
 		fputs(buffer, fp);
 	}
 
 	/* bottom margin */
-	writeANSI_margin(fp, realwidth, buffer, white, white_s);
+	writeANSI_margin(fp, realwidth, buffer, buffer_s, white, reset);
 
 	fclose(fp);
 	free(buffer);

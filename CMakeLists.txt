@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.16)
 
 project(libqrencode-ng 
-    VERSION 4.2.0 
+    VERSION 5.0.0 
     DESCRIPTION "A fast and compact QR Code encoding library"
     LANGUAGES C
 )
@@ -15,9 +15,12 @@ option(QRENCODE_BUILD_TOOLS "Build utility tools" ON)
 option(QRENCODE_BUILD_TESTS "Build tests" OFF)
 option(QRENCODE_ENABLE_PNG "Enable PNG support" ON)
 option(QRENCODE_BUILD_SHARED "Build shared library" OFF)
-option(QRENCODE_ENABLE_GPROF "Generate extra code for profiling" OFF)
-option(QRENCODE_ENABLE_COVERAGE "Generate extra code for coverage" OFF)
-option(QRENCODE_ENABLE_ASAN "Use AddressSanitizer" OFF)
+
+# Security and debugging options
+option(QRENCODE_ENABLE_ASAN "Enable AddressSanitizer for memory error detection" OFF)
+option(QRENCODE_ENABLE_UBSAN "Enable UndefinedBehaviorSanitizer" OFF)
+option(QRENCODE_ENABLE_COVERAGE "Enable code coverage reporting" OFF)
+option(QRENCODE_ENABLE_GPROF "Enable gprof profiling" OFF)
 
 # Set default build type
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
@@ -128,16 +131,21 @@ target_compile_definitions(qrencode
 
 # Compiler flags
 target_compile_options(qrencode
-    PRIVATE
-        $<$<C_COMPILER_ID:GNU,Clang>:-Wall>
+        PRIVATE
+        $<$<C_COMPILER_ID:GNU,Clang>:-Wall -Wextra -Wpedantic>
         $<$<BOOL:${QRENCODE_ENABLE_GPROF}>:-pg>
         $<$<BOOL:${QRENCODE_ENABLE_COVERAGE}>:--coverage>
         $<$<BOOL:${QRENCODE_ENABLE_ASAN}>:-fsanitize=address -fno-omit-frame-pointer -fno-optimize-sibling-calls>
+        $<$<BOOL:${QRENCODE_ENABLE_UBSAN}>:-fsanitize=undefined -fno-sanitize-recover=all>
 )
 
 # Linker flags
 if(QRENCODE_ENABLE_ASAN)
     target_link_options(qrencode PRIVATE -fsanitize=address)
+endif()
+
+if(QRENCODE_ENABLE_UBSAN)
+    target_link_options(qrencode PRIVATE -fsanitize=undefined)
 endif()
 
 if(QRENCODE_ENABLE_COVERAGE)
