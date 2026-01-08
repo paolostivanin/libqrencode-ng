@@ -58,24 +58,6 @@ not to build it, give "-DQRENCODE_BUILD_TOOLS=OFF" option to the cmake command.
 
 When you want to build the test programs, give "-DQRENCODE_BUILD_TESTS=ON" to cmake.
 
-### Building libqrencode with vcpkg
-
-You can download and install libqrencode using the
-[vcpkg](https://github.com/Microsoft/vcpkg) dependency manager:
-   
-```
-git clone https://github.com/Microsoft/vcpkg.git
-cd vcpkg
-./bootstrap-vcpkg.sh
-./vcpkg integrate install
-./vcpkg install libqrencode
-```
-    
-The libqrencode port in vcpkg is kept up to date by Microsoft team members and
-community contributors. If the version is out of date, please
-[create an issue or pull request](https://github.com/Microsoft/vcpkg) on the
-vcpkg repository.
-
 
 USAGE
 =====
