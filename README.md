@@ -26,12 +26,8 @@ are implemented such as:
   embedded
 - Optimized encoding of a string
 - Structured-append of symbols
-- Micro QR Code (experimental)
-
-Currently the following features are not supported:
-
 - ECI and FNC1 mode
-- QR Code model 1 (deprecated)
+- Micro QR Code
 
 
 INSTALL
@@ -94,8 +90,6 @@ https://fukuchi.org/works/qrencode/manual/index.html
 WARNINGS
 ========
 The library is distributed WITHOUT ANY WARRANTY.
-
-Micro QR Code support is EXPERIMENTAL.
 
 Be careful to use the command line tool (qrencode) if it is used by a web
 application (e.g. CGI script). For example, giving "-s" option with a large

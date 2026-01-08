@@ -36,6 +36,7 @@
 
 #include "qrencode.h"
 #include "qrinput.h"
+#include "split.h"
 
 #define INCHES_PER_METER (100.0/2.54)
 
@@ -53,6 +54,10 @@ static int inline_svg = 0;
 static int strict_versioning = 0;
 static QRecLevel level = QR_ECLEVEL_L;
 static QRencodeMode hint = QR_MODE_8;
+static bool eci_enabled = false;
+static unsigned int eci_assignment = 0;
+static int fnc1_mode = 0;
+static unsigned char fnc1_appid = 0;
 static unsigned char fg_color[4] = {0, 0, 0, 255};
 static unsigned char bg_color[4] = {255, 255, 255, 255};
 
@@ -77,6 +82,12 @@ enum imageType {
 
 static enum imageType image_type = PNG_TYPE;
 
+enum optionId {
+	OPT_ECI = 256,
+	OPT_FNC1_FIRST,
+	OPT_FNC1_SECOND
+};
+
 static const struct option options[] = {
 	{"help"          , no_argument      , NULL, 'h'},
 	{"output"        , required_argument, NULL, 'o'},
@@ -97,6 +108,9 @@ static const struct option options[] = {
 	{"svg-path"      , no_argument      , &svg_path, 1},
 	{"inline"        , no_argument      , &inline_svg, 1},
 	{"strict-version", no_argument      , &strict_versioning, 1},
+	{"eci"           , required_argument, NULL, OPT_ECI},
+	{"fnc1-first"    , no_argument      , NULL, OPT_FNC1_FIRST},
+	{"fnc1-second"   , required_argument, NULL, OPT_FNC1_SECOND},
 	{"foreground"    , required_argument, NULL, 'f'},
 	{"background"    , required_argument, NULL, 'b'},
 	{"version"       , no_argument      , NULL, 'V'},
@@ -175,6 +189,20 @@ static size_t ansi_line_buffer_size(size_t qrcode_width, size_t margin_size, siz
 	return checked_size_add(line_len, 1);
 }
 
+static int parse_unsigned(const char *text, unsigned int max, unsigned int *value)
+{
+	char *end = NULL;
+	unsigned long parsed;
+
+	errno = 0;
+	parsed = strtoul(text, &end, 10);
+	if(errno != 0 || end == text || *end != '\0' || parsed > max) {
+		return -1;
+	}
+	*value = (unsigned int)parsed;
+	return 0;
+}
+
 static void usage(int help, int longopt, int status)
 {
 	FILE *out = status ? stderr : stdout;
@@ -207,6 +235,13 @@ static void usage(int help, int longopt, int status)
 "               specify the width of the margins. (default=4 (2 for Micro QR)))\n\n"
 "  -d NUMBER, --dpi=NUMBER\n"
 "               specify the DPI of the generated PNG. (default=72)\n\n"
+"  --eci=NUMBER\n"
+"               add an ECI header (assignment number 0-999999).\n\n"
+"  --fnc1-first\n"
+"               add the FNC1 first-position mode indicator.\n\n"
+"  --fnc1-second=APPID\n"
+"               add the FNC1 second-position mode indicator with the application\n"
+"               identifier (0-255).\n\n"
 "  -t {PNG,PNG32,EPS,SVG,XPM,ANSI,ANSI256,ASCII,ASCIIi,UTF8,UTF8i,ANSIUTF8,ANSIUTF8i,ANSI256UTF8},\n"
 "  --type={PNG,PNG32,EPS,SVG,XPM,ANSI,ANSI256,ASCII,ASCIIi,UTF8,UTF8i,ANSIUTF8,ANSIUTF8i,ANSI256UTF8}\n"
 "               specify the type of the generated image. (default=PNG)\n\n"
@@ -274,6 +309,9 @@ static void usage(int help, int longopt, int status)
 "  -8           encode entire data in 8-bit mode. -k, -c and -i will be ignored.\n"
 "  -M           encode in a Micro QR Code.\n"
 "  -V           display the version number and copyrights of the qrencode.\n"
+"  --eci=NUMBER add an ECI header (assignment number 0-999999).\n"
+"  --fnc1-first add the FNC1 first-position mode indicator.\n"
+"  --fnc1-second=APPID add the FNC1 second-position mode indicator (0-255).\n"
 "  [STRING]     input data. If it is not specified, data will be taken from\n"
 "               standard input.\n\n"
 "  Try \"qrencode --help\" for more options.\n"
@@ -1091,6 +1129,48 @@ static QRcode *encode(const unsigned char *intext, int length)
 {
 	QRcode *code;
 
+	if(eci_enabled || fnc1_mode != 0) {
+		QRinput *input;
+
+		if(micro) {
+			errno = EINVAL;
+			return NULL;
+		}
+		input = QRinput_new2(version, level);
+		if(input == NULL) return NULL;
+		if(eci_enabled) {
+			if(QRinput_appendECIheader(input, eci_assignment) < 0) {
+				QRinput_free(input);
+				return NULL;
+			}
+		}
+		if(fnc1_mode == 1) {
+			if(QRinput_setFNC1First(input) < 0) {
+				QRinput_free(input);
+				return NULL;
+			}
+		} else if(fnc1_mode == 2) {
+			if(QRinput_setFNC1Second(input, fnc1_appid) < 0) {
+				QRinput_free(input);
+				return NULL;
+			}
+		}
+		if(eightbit) {
+			if(QRinput_append(input, QR_MODE_8, length, intext) < 0) {
+				QRinput_free(input);
+				return NULL;
+			}
+		} else {
+			if(Split_splitStringToQRinput((char *)intext, input, hint, casesensitive) < 0) {
+				QRinput_free(input);
+				return NULL;
+			}
+		}
+		code = QRcode_encodeInput(input);
+		QRinput_free(input);
+		return code;
+	}
+
 	if(micro) {
 		if(eightbit) {
 			code = QRcode_encodeDataMQR(length, intext, version, level);
@@ -1178,6 +1258,54 @@ static void qrencode(const unsigned char *intext, int length, const char *outfil
 static QRcode_List *encodeStructured(const unsigned char *intext, int length)
 {
 	QRcode_List *list;
+
+	if(eci_enabled || fnc1_mode != 0) {
+		QRinput *input;
+		QRinput_Struct *s;
+
+		if(micro) {
+			errno = EINVAL;
+			return NULL;
+		}
+		input = QRinput_new2(version, level);
+		if(input == NULL) return NULL;
+		if(eci_enabled) {
+			if(QRinput_appendECIheader(input, eci_assignment) < 0) {
+				QRinput_free(input);
+				return NULL;
+			}
+		}
+		if(fnc1_mode == 1) {
+			if(QRinput_setFNC1First(input) < 0) {
+				QRinput_free(input);
+				return NULL;
+			}
+		} else if(fnc1_mode == 2) {
+			if(QRinput_setFNC1Second(input, fnc1_appid) < 0) {
+				QRinput_free(input);
+				return NULL;
+			}
+		}
+		if(eightbit) {
+			if(QRinput_append(input, QR_MODE_8, length, intext) < 0) {
+				QRinput_free(input);
+				return NULL;
+			}
+		} else {
+			if(Split_splitStringToQRinput((char *)intext, input, hint, casesensitive) < 0) {
+				QRinput_free(input);
+				return NULL;
+			}
+		}
+		s = QRinput_splitQRinputToStruct(input);
+		QRinput_free(input);
+		if(s == NULL) {
+			return NULL;
+		}
+		list = QRcode_encodeInputStructured(s);
+		QRinput_Struct_free(s);
+		return list;
+	}
 
 	if(eightbit) {
 		list = QRcode_encodeDataStructured(length, intext, version, level);
@@ -1448,6 +1576,39 @@ int main(int argc, char **argv)
 			case 'M':
 				micro = true;
 				break;
+			case OPT_ECI:
+				if(eci_enabled) {
+					fprintf(stderr, "ECI header is already specified.\n");
+					exit(EXIT_FAILURE);
+				}
+				if(parse_unsigned(optarg, 999999, &eci_assignment) < 0) {
+					fprintf(stderr, "Invalid ECI assignment number: %s\n", optarg);
+					exit(EXIT_FAILURE);
+				}
+				eci_enabled = true;
+				break;
+			case OPT_FNC1_FIRST:
+				if(fnc1_mode != 0) {
+					fprintf(stderr, "FNC1 mode is already specified.\n");
+					exit(EXIT_FAILURE);
+				}
+				fnc1_mode = 1;
+				break;
+			case OPT_FNC1_SECOND:
+				if(fnc1_mode != 0) {
+					fprintf(stderr, "FNC1 mode is already specified.\n");
+					exit(EXIT_FAILURE);
+				}
+				{
+					unsigned int appid = 0;
+					if(parse_unsigned(optarg, 255, &appid) < 0) {
+						fprintf(stderr, "Invalid FNC1 application identifier: %s\n", optarg);
+						exit(EXIT_FAILURE);
+					}
+					fnc1_mode = 2;
+					fnc1_appid = (unsigned char)appid;
+				}
+				break;
 			case 'f':
 				if(color_set(fg_color, optarg)) {
 					fprintf(stderr, "Invalid foreground color value.\n");
@@ -1500,6 +1661,10 @@ int main(int argc, char **argv)
 		exit(EXIT_FAILURE);
 	} else if(!micro && version > QRSPEC_VERSION_MAX) {
 		fprintf(stderr, "Version number should be less or equal to %d.\n", QRSPEC_VERSION_MAX);
+		exit(EXIT_FAILURE);
+	}
+	if(micro && (eci_enabled || fnc1_mode != 0)) {
+		fprintf(stderr, "Micro QR Code does not support ECI or FNC1 modes.\n");
 		exit(EXIT_FAILURE);
 	}
 

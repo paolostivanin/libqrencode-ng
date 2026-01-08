@@ -753,6 +753,11 @@ static int QRinput_encodeModeFNC1Second(QRinput_List *entry, BitStream *bstream)
 	return 0;
 }
 
+static int QRinput_encodeModeFNC1First(BitStream *bstream)
+{
+	return (int)BitStream_appendNum(bstream, 4, QRSPEC_MODEID_FNC1FIRST);
+}
+
 /******************************************************************************
  * ECI header
  *****************************************************************************/
@@ -820,7 +825,11 @@ static int QRinput_encodeModeECI(QRinput_List *entry, BitStream *bstream)
 
 int QRinput_check(QRencodeMode mode, int size, const unsigned char *data)
 {
-	if((mode == QR_MODE_FNC1FIRST && size < 0) || size <= 0) return -1;
+	if(mode == QR_MODE_FNC1FIRST) {
+		if(size < 0) return -1;
+	} else if(size <= 0) {
+		return -1;
+	}
 
 	switch(mode) {
 		case QR_MODE_NUM:
@@ -1058,6 +1067,9 @@ static int QRinput_encodeBitStream(QRinput_List *entry, BitStream *bstream, int 
 				break;
 			case QR_MODE_ECI:
 				ret = QRinput_encodeModeECI(entry, bstream);
+				break;
+			case QR_MODE_FNC1FIRST:
+				ret = QRinput_encodeModeFNC1First(bstream);
 				break;
 			case QR_MODE_FNC1SECOND:
 				ret = QRinput_encodeModeFNC1Second(entry, bstream);
@@ -1623,7 +1635,7 @@ int QRinput_setFNC1First(QRinput *input)
 		errno = EINVAL;
 		return -1;
 	}
-	input->fnc1 = true;
+	input->fnc1 = 1;
 
 	return 0;
 }
@@ -1634,7 +1646,7 @@ int QRinput_setFNC1Second(QRinput *input, unsigned char appid)
 		errno = EINVAL;
 		return -1;
 	}
-	input->fnc1 = true;
+	input->fnc1 = 2;
 	input->appid = appid;
 
 	return 0;

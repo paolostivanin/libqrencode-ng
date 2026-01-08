@@ -1074,9 +1074,63 @@ static void test_encodeECI(void)
 	testFinish();
 }
 
+static void test_encodeFNC1First(void)
+{
+	QRinput *input;
+	BitStream *bstream;
+	unsigned char str[] = {'A'};
+	char *correct = "0101 0100 00000001 01000001";
+	int ret;
+
+	testStart("Encoding characters with FNC1 first-position mode.");
+	input = QRinput_new();
+	ret = QRinput_setFNC1First(input);
+	assert_zero(ret, "Failed to set FNC1 first-position.\n");
+
+	ret = QRinput_append(input, QR_MODE_8, 1, str);
+	assert_zero(ret, "Failed to append characters.\n");
+	bstream = BitStream_new();
+	QRinput_mergeBitStream(input, bstream);
+	assert_nonnull(bstream, "Failed to merge.\n");
+	if(bstream != NULL) {
+		ret = ncmpBin(correct, bstream, 24);
+		assert_zero(ret, "Encodation of FNC1 first-position mode was invalid.\n");
+		BitStream_free(bstream);
+	}
+	QRinput_free(input);
+	testFinish();
+}
+
+static void test_encodeFNC1Second(void)
+{
+	QRinput *input;
+	BitStream *bstream;
+	unsigned char str[] = {'A'};
+	char *correct = "1001 00010010 0100 00000001 01000001";
+	int ret;
+
+	testStart("Encoding characters with FNC1 second-position mode.");
+	input = QRinput_new();
+	ret = QRinput_setFNC1Second(input, 0x12);
+	assert_zero(ret, "Failed to set FNC1 second-position.\n");
+
+	ret = QRinput_append(input, QR_MODE_8, 1, str);
+	assert_zero(ret, "Failed to append characters.\n");
+	bstream = BitStream_new();
+	QRinput_mergeBitStream(input, bstream);
+	assert_nonnull(bstream, "Failed to merge.\n");
+	if(bstream != NULL) {
+		ret = ncmpBin(correct, bstream, 32);
+		assert_zero(ret, "Encodation of FNC1 second-position mode was invalid.\n");
+		BitStream_free(bstream);
+	}
+	QRinput_free(input);
+	testFinish();
+}
+
 int main()
 {
-	int tests = 42;
+	int tests = 44;
 	testInit(tests);
 
 	test_encodeNumeric();
@@ -1122,6 +1176,8 @@ int main()
 
 	test_ECIinvalid();
 	test_encodeECI();
+	test_encodeFNC1First();
+	test_encodeFNC1Second();
 
 	testReport(tests);
 
