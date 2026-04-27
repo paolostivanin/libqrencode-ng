@@ -1,182 +1,194 @@
-# libqrencode - a fast and compact QR Code encoding library 
+# libqrencode-ng — a fast and compact QR Code encoding library
 
-GENERAL INFORMATION
-===================
-Libqrencode is a fast and compact library for encoding data in a QR Code,
-a 2D symbology that can be scanned by handy terminals such as a smartphone.
-The capacity of QR Code is up to 7000 digits or 4000 characters and has high
-robustness.
+`libqrencode-ng` is a community-maintained fork of the original
+[libqrencode](https://github.com/fukuchi/libqrencode) by Kentaro Fukuchi,
+modernized for current Linux and BSD systems.
 
-Libqrencode accepts a string or a list of data chunks then encodes in a QR Code
-symbol as a bitmap array. While other QR Code applications generate an image
-file, using libqrencode allows applications to render QR Code symbols from raw
-bitmap data directly. This library also contains a command-line utility outputs
-QR Code images in various formats.
+It is installed as a parallel package: it does not conflict with upstream
+`libqrencode` and the two can be installed side by side.
 
+## What's different from upstream
 
-SPECIFICATION
-=============
-Libqrencode supports QR Code model 2, described in JIS (Japanese Industrial
-Standards) X0510:2004 or ISO/IEC 18004. Most of features in the specification
-are implemented such as:
+* **Build system:** CMake-only (>= 3.16). All Autotools support has been
+  removed.
+* **Language standard:** C11 is required. Source has been migrated to use
+  `bool`, `stdint` and other C11 idioms.
+* **Compilers:** GCC and Clang only.
+* **Platforms:** Linux and BSD. Windows-, macOS- and SDL-specific code paths
+  have been dropped.
+* **Hardening:** ANSI / ANSI256 / ANSIUTF8 / ANSI256UTF8 output buffers are
+  now sized correctly to prevent overflows on large inputs.
+* **Command-line tool:** added `--eci=N`, `--fnc1-first` and
+  `--fnc1-second=AI` for ECI and FNC1 encoding.
+* **Sanitizer / coverage builds:** opt-in via `QRENCODE_ENABLE_ASAN`,
+  `QRENCODE_ENABLE_UBSAN`, `QRENCODE_ENABLE_COVERAGE`,
+  `QRENCODE_ENABLE_GPROF`.
+* **Naming:** library, header, pkg-config module, CMake package and CLI tool
+  are all suffixed with `-ng` so this package coexists with upstream
+  `libqrencode` on the same system. See [Installed files](#installed-files)
+  below.
 
-- Numeric, alphabet, Japanese kanji (Shift-JIS) or any 8 bit code can be
+## Specification
+
+`libqrencode-ng` supports QR Code model 2, described in JIS X0510:2004 /
+ISO/IEC 18004. Most features of the specification are implemented:
+
+* Numeric, alphanumeric, Japanese kanji (Shift-JIS) or any 8-bit data can be
   embedded
-- Optimized encoding of a string
-- Structured-append of symbols
-- ECI and FNC1 mode
-- Micro QR Code
+* Optimized encoding of a string
+* Structured-append of symbols
+* ECI and FNC1 mode
+* Micro QR Code
 
+## Requirements
 
-INSTALL
-=======
+* CMake >= 3.16
+* GCC or Clang with C11 support
+* `libpng` (optional — required only for PNG output in the CLI tool)
+* `iconv` (optional — used by some test programs)
+* `pthread` (optional — used for thread-safe builds)
 
-Requirements
-------------
-While the command-line utility and some test programs use libpng or SDL 2.0,
-the libqrencode library itself has no dependencies. You can skip compiling
-tests and/or tools if you want not to install programs using SDL or PNG.
+The library itself has no mandatory runtime dependencies.
 
-Compile & install
------------------
+## Build & install
 
-Now you are ready to compile the library and tool. Type the following commands:
-
-```
-cmake .
-make
-sudo make install
+```sh
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+cmake --build build -j
+sudo cmake --install build
 ```
 
-This compiles and installs the library and header file to the appropriate
-directories: by default, /usr/local/lib and /usr/local/include. You can change
-the destination directory by passing some options to the cmake command.
-Run "cmake -LH" to see the list of options.
+By default this installs to `/usr/local`. To install elsewhere pass
+`-DCMAKE_INSTALL_PREFIX=/path` to the configure step.
 
-It also installs a command line tool "qrencode" to /usr/local/bin. If you want
-not to build it, give "-DQRENCODE_BUILD_TOOLS=OFF" option to the cmake command.
+Useful CMake options:
 
-When you want to build the test programs, give "-DQRENCODE_BUILD_TESTS=ON" to cmake.
+| Option                         | Default | Description                       |
+| ------------------------------ | ------- | --------------------------------- |
+| `QRENCODE_BUILD_TOOLS`         | `ON`    | Build the `qrencode-ng` CLI tool  |
+| `QRENCODE_BUILD_TESTS`         | `OFF`   | Build the test programs           |
+| `QRENCODE_BUILD_SHARED`        | `ON`    | Build a shared library (else static) |
+| `QRENCODE_ENABLE_PNG`          | `ON`    | Enable PNG output in the CLI      |
+| `QRENCODE_ENABLE_ASAN`         | `OFF`   | Build with AddressSanitizer       |
+| `QRENCODE_ENABLE_UBSAN`        | `OFF`   | Build with UndefinedBehaviorSanitizer |
+| `QRENCODE_ENABLE_COVERAGE`     | `OFF`   | Build with coverage instrumentation |
+| `QRENCODE_ENABLE_GPROF`        | `OFF`   | Build with gprof instrumentation  |
 
+To run the test suite:
 
-USAGE
-=====
-Basic usages of this library are written in the header file (qrencode.h).
-You can generate a manual of the library by using Doxygen, or see
+```sh
+cmake -S . -B build -DQRENCODE_BUILD_TESTS=ON
+cmake --build build -j
+ctest --test-dir build --output-on-failure
+```
 
-https://fukuchi.org/works/qrencode/manual/index.html
+## Installed files
 
+| File                                              | Purpose                  |
+| ------------------------------------------------- | ------------------------ |
+| `<prefix>/lib/libqrencode-ng.so.5`                | Shared library           |
+| `<prefix>/include/qrencode-ng/qrencode.h`         | Public C header          |
+| `<prefix>/lib/pkgconfig/libqrencode-ng.pc`        | pkg-config module        |
+| `<prefix>/lib/cmake/qrencode-ng/`                 | CMake package config     |
+| `<prefix>/bin/qrencode-ng`                        | CLI tool                 |
+| `<prefix>/share/man/man1/qrencode-ng.1`           | CLI man page             |
 
-WARNINGS
-========
+## Using the library
+
+With pkg-config:
+
+```sh
+cc $(pkg-config --cflags libqrencode-ng) myprog.c \
+   $(pkg-config --libs libqrencode-ng) -o myprog
+```
+
+In source:
+
+```c
+#include <qrencode-ng/qrencode.h>
+```
+
+With CMake:
+
+```cmake
+find_package(qrencode-ng REQUIRED)
+target_link_libraries(myprog PRIVATE qrencode-ng::qrencode-ng)
+```
+
+A full API reference can be generated with Doxygen:
+
+```sh
+doxygen Doxyfile
+```
+
+## Warnings
+
 The library is distributed WITHOUT ANY WARRANTY.
 
-Be careful to use the command line tool (qrencode) if it is used by a web
-application (e.g. CGI script). For example, giving "-s" option with a large
-number to qrencode may cause DoS. The parameters should be checked by the
-application.
+Be careful when exposing the `qrencode-ng` CLI to untrusted input (e.g. from
+a CGI script). For example, passing a very large `-s` value can be used to
+exhaust memory. Validate parameters at the application boundary.
 
+## License
 
-LICENSING INFORMATION
-=====================
-Copyright (C) 2006-2018 Kentaro Fukuchi
+libqrencode-ng is distributed under the GNU Lesser General Public License,
+version 2.1 or any later version. See the [`COPYING`](COPYING) file for the
+full license text.
 
-This library is free software; you can redistribute it and/or modify it under
-the terms of the GNU Lesser General Public License as published by the Free
-Software Foundation; either version 2.1 of the License, or any later version.
+```
+Copyright (C) 2006-2018 Kentaro Fukuchi (original libqrencode)
+Copyright (C) 2025-2026 Paolo Stivanin and the libqrencode-ng contributors
+```
 
-This library is distributed in the hope that it will be useful, but WITHOUT ANY
-WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
-PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.
+The Reed-Solomon encoder included in this library was originally taken from
+the FEC library developed by Phil Karn (KA9Q), distributed under the GNU
+LGPL, then rewritten by Kentaro Fukuchi.
 
-You should have received a copy of the GNU Lesser General Public License along
-with this library; if not, write to the Free Software Foundation, Inc., 51
-Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
-
-
-CONTACT
-=======
-Visit the homepage at:
-
-https://fukuchi.org/works/qrencode/
-
-for new releases. The git repository is available at:
-
-https://github.com/fukuchi/libqrencode
-
-Please mail any bug reports, suggestions, comments, and questions to:
-
-Kentaro Fukuchi <kentaro@fukuchi.org>
-
-or submit issues to:
-
-https://github.com/fukuchi/libqrencode/issues
-
-
-ACKNOWLEDGMENTS
-===============
-QR Code is registered trademarks of DENSO WAVE INCORPORATED in JAPAN and other
-countries.
-
-Reed-Solomon encoder included in this library is originally taken from FEC
-library developed by Phil Karn (KA9Q) and distributed under the terms of the
-GNU LGPL, then rewritten by Kentaro Fukuchi.
+```
 Copyright (C) 2002, 2003, 2004, 2006 Phil Karn, KA9Q
+```
 
-* NANKI Haruo           - improved lower-case characters encoding
-* Katsumi Saito         - SPEC file
-* Philippe Delcroix     - improved mask evaluation
-* Yusuke Mihara         - structured-append support
-* David Dahl            - DPI and SVG support patch
-* Adam Shepherd         - bug fix patch of the mask evaluation
-* Josef Eisl (@zapster) - EPS support patch
-* Colin (@moshen)       - ANSI support patch
-* Ralf Ertzinger        - ASCII support patch
-* Yutaka Niibe (@gniibe)- various bug fix patches
-* Dan Storm (@Repox)    - SVG support patch
-* Lennart Poettering (@mezcalero)
-                        - improved text art patch
-* Yann Droneaud         - improved input validation patch
-* Viona                 - bug fix patch for string splitting
-* Daniel Dörrhöfer (@d4ndo)
-                        - RLE option, some bug fixes, Travis configuration
-* Greg Hart             - PNG32 support patch
-* @siggi-heltau         - bug fix patch
-* Tobias Klauser (@tklauser)
-                        - bug fix patch, XPM support patch
-* Robert Petersen (@ripetersen)
-                        - added ability to read input data from a file
-* @Oblomov              - improved SVG support patch
-* Michał Górny (@mgorny)
-                        - reverse mappings of UTF8 and ANSIUTF8, build script
-                          fixes
-* @EckoEdc              - Various fixes
-* Sebastian Buchwald (@UniQP)
-                        - Various code cleanups
-* André Klitzing (@misery)
-                        - CMake support
-* Alexey Nikolaev (@aleksey-nikolaev)
-                        - improved CMake support
-* Vilppu Vuorinen (@vilppuvuorinen)
-                        - improved CMake support
-* @vanillahsu           - bug fix patch
-* @Ation                - bug fix patch
-* Jonathan Bennett      - Added "--inline" option to qrencode
-* András Veres-Szentkirályi
-                        - ANSI256UTF8 support
-* @sdf5                 - improved CMake support
-* Lonnie Abelbeck (@abelbeck)
-                        - bug fix patch
-* @4061N                - performance improvement patch
-* Rosen Penev (@neheb)  - CMake bug fix patch
-* Mika Lindqvist (@mtl1979)
-                        - bug fix patch
-* Shigeyuki Hirai, Paul Janssens, wangsai, Gavan Fantom, Matthew Baker,
-  Rob Ryan, Fred Steinhaeuser, Terry Burton, @chisj, @vlad417, Petr,
-  Hassan Hajji, Emmanuel Blot, ßlúèÇhîp, Heiko Becker, Gavin Andresen,
-  David Binderman, @ralgozino, Sean McMurray, Vlad Bespalov (@win32asm),
-  Antenore Gatta, Yoshimichi Inoue, Sunil Maganally, Norman Gray,
-  Danomi Manchego, @minus7, Ian Sweet, @qianchenglenger, Ronald Michaels,
-  Yuji Ueno, Jakub Wilk, @KangLin, @c-273, @thebunnyrules, @NancyLi1013,
-  Frédéric Wang, Dan Jacobson, Jan Tojnar, @xiaoyur347, @charmander
-                        - bug report / suggestion / typo fixes
+## Reporting issues
+
+Please file bugs and feature requests against this fork at:
+
+  https://github.com/paolostivanin/libqrencode-ng/issues
+
+For issues that affect upstream libqrencode as well, see also:
+
+  https://github.com/fukuchi/libqrencode
+
+## Acknowledgments
+
+QR Code is a registered trademark of DENSO WAVE INCORPORATED in Japan and
+other countries.
+
+This fork builds on years of work by Kentaro Fukuchi and the upstream
+libqrencode contributors. The full list of upstream contributors is preserved
+in the project history; a non-exhaustive selection follows.
+
+* NANKI Haruo — improved lower-case characters encoding
+* Katsumi Saito — SPEC file
+* Philippe Delcroix — improved mask evaluation
+* Yusuke Mihara — structured-append support
+* David Dahl — DPI and SVG support
+* Adam Shepherd — bug fix for mask evaluation
+* Josef Eisl (@zapster) — EPS support
+* Colin (@moshen) — ANSI support
+* Ralf Ertzinger — ASCII support
+* Yutaka Niibe (@gniibe) — various bug fixes
+* Dan Storm (@Repox) — SVG support
+* Lennart Poettering (@mezcalero) — improved text art
+* Yann Droneaud — improved input validation
+* Daniel Dörrhöfer (@d4ndo) — RLE option, bug fixes
+* Greg Hart — PNG32 support
+* Tobias Klauser (@tklauser) — XPM support, bug fixes
+* Robert Petersen (@ripetersen) — read input from file
+* Michał Górny (@mgorny) — UTF8/ANSIUTF8 reverse mappings, build fixes
+* André Klitzing (@misery), Alexey Nikolaev (@aleksey-nikolaev),
+  Vilppu Vuorinen (@vilppuvuorinen), @sdf5 — CMake support
+* Jonathan Bennett — `--inline` option for qrencode
+* András Veres-Szentkirályi — ANSI256UTF8 support
+
+…and many others who contributed bug reports, suggestions and patches over
+the lifetime of upstream libqrencode.

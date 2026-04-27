@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.16)
 
-project(libqrencode-ng 
-    VERSION 5.0.0 
+project(libqrencode-ng
+    VERSION 5.0.0
     DESCRIPTION "A fast and compact QR Code encoding library"
     LANGUAGES C
 )
@@ -96,25 +96,27 @@ set(QRENCODE_PUBLIC_HEADERS
 )
 
 if(QRENCODE_BUILD_SHARED)
-    add_library(qrencode SHARED ${QRENCODE_SOURCES} ${QRENCODE_HEADERS})
-    set_target_properties(qrencode PROPERTIES
+    add_library(qrencode-ng SHARED ${QRENCODE_SOURCES} ${QRENCODE_HEADERS})
+    set_target_properties(qrencode-ng PROPERTIES
         VERSION ${PROJECT_VERSION}
         SOVERSION ${PROJECT_VERSION_MAJOR}
+        OUTPUT_NAME qrencode-ng
     )
 else()
-    add_library(qrencode STATIC ${QRENCODE_SOURCES} ${QRENCODE_HEADERS})
+    add_library(qrencode-ng STATIC ${QRENCODE_SOURCES} ${QRENCODE_HEADERS})
+    set_target_properties(qrencode-ng PROPERTIES OUTPUT_NAME qrencode-ng)
 endif()
 
-add_library(qrencode::qrencode ALIAS qrencode)
+add_library(qrencode-ng::qrencode-ng ALIAS qrencode-ng)
 
 # Target properties
-target_include_directories(qrencode
+target_include_directories(qrencode-ng
     PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>
-        $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+        $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/qrencode-ng>
 )
 
-target_compile_definitions(qrencode
+target_compile_definitions(qrencode-ng
     PUBLIC
         MAJOR_VERSION=${PROJECT_VERSION_MAJOR}
         MINOR_VERSION=${PROJECT_VERSION_MINOR}
@@ -130,7 +132,7 @@ target_compile_definitions(qrencode
 )
 
 # Compiler flags
-target_compile_options(qrencode
+target_compile_options(qrencode-ng
         PRIVATE
         $<$<C_COMPILER_ID:GNU,Clang>:-Wall -Wextra -Wpedantic>
         $<$<BOOL:${QRENCODE_ENABLE_GPROF}>:-pg>
@@ -141,42 +143,42 @@ target_compile_options(qrencode
 
 # Linker flags
 if(QRENCODE_ENABLE_ASAN)
-    target_link_options(qrencode PRIVATE -fsanitize=address)
+    target_link_options(qrencode-ng PRIVATE -fsanitize=address)
 endif()
 
 if(QRENCODE_ENABLE_UBSAN)
-    target_link_options(qrencode PRIVATE -fsanitize=undefined)
+    target_link_options(qrencode-ng PRIVATE -fsanitize=undefined)
 endif()
 
 if(QRENCODE_ENABLE_COVERAGE)
-    target_link_options(qrencode PRIVATE --coverage)
+    target_link_options(qrencode-ng PRIVATE --coverage)
 endif()
 
 if(QRENCODE_ENABLE_GPROF)
-    target_link_options(qrencode PRIVATE -pg)
+    target_link_options(qrencode-ng PRIVATE -pg)
 endif()
 
 # Link dependencies
 if(CMAKE_USE_PTHREADS_INIT)
-    target_link_libraries(qrencode PUBLIC Threads::Threads)
+    target_link_libraries(qrencode-ng PUBLIC Threads::Threads)
 endif()
 
 
 # ============================================================================
-# Command-line tool (qrenc -> qrencode)
+# Command-line tool (qrenc -> qrencode-ng)
 # ============================================================================
 
 if(QRENCODE_BUILD_TOOLS)
     add_executable(qrenc src/qrenc.c)
-    set_target_properties(qrenc PROPERTIES OUTPUT_NAME qrencode)
-    
-    target_link_libraries(qrenc PRIVATE qrencode)
-    
+    set_target_properties(qrenc PROPERTIES OUTPUT_NAME qrencode-ng)
+
+    target_link_libraries(qrenc PRIVATE qrencode-ng)
+
     if(QRENCODE_ENABLE_PNG AND PNG_FOUND)
         target_compile_definitions(qrenc PRIVATE HAVE_PNG=1)
         target_link_libraries(qrenc PRIVATE PNG::PNG)
     endif()
-    
+
 endif()
 
 # ============================================================================
@@ -200,41 +202,46 @@ set(exec_prefix "\${prefix}")
 set(libdir "\${prefix}/${CMAKE_INSTALL_LIBDIR}")
 set(includedir "\${prefix}/${CMAKE_INSTALL_INCLUDEDIR}")
 set(VERSION "${PROJECT_VERSION}")
-set(LIBPTHREAD "$<$<BOOL:${CMAKE_USE_PTHREADS_INIT}>:${CMAKE_THREAD_LIBS_INIT}>")
+if(CMAKE_USE_PTHREADS_INIT)
+    set(LIBPTHREAD "${CMAKE_THREAD_LIBS_INIT}")
+else()
+    set(LIBPTHREAD "")
+endif()
 
 configure_file(
-    "${CMAKE_CURRENT_SOURCE_DIR}/libqrencode.pc.in"
-    "${CMAKE_CURRENT_BINARY_DIR}/libqrencode.pc"
+    "${CMAKE_CURRENT_SOURCE_DIR}/libqrencode-ng.pc.in"
+    "${CMAKE_CURRENT_BINARY_DIR}/libqrencode-ng.pc"
     @ONLY
 )
 
 # Configure man page
 if(QRENCODE_BUILD_TOOLS)
     configure_file(
-        "${CMAKE_CURRENT_SOURCE_DIR}/qrencode.1.in"
-        "${CMAKE_CURRENT_BINARY_DIR}/qrencode.1"
+        "${CMAKE_CURRENT_SOURCE_DIR}/qrencode-ng.1.in"
+        "${CMAKE_CURRENT_BINARY_DIR}/qrencode-ng.1"
         @ONLY
     )
-    install(FILES "${CMAKE_CURRENT_BINARY_DIR}/qrencode.1"
+    install(FILES "${CMAKE_CURRENT_BINARY_DIR}/qrencode-ng.1"
         DESTINATION ${CMAKE_INSTALL_MANDIR}/man1
     )
 endif()
 
 # Install library
-install(TARGETS qrencode
-    EXPORT qrencode-targets
+install(TARGETS qrencode-ng
+    EXPORT qrencode-ng-targets
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
 
-# Install headers
+# Install headers (into the qrencode-ng/ subdirectory so we coexist with
+# upstream libqrencode's qrencode.h)
 install(FILES ${QRENCODE_PUBLIC_HEADERS}
-    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/qrencode-ng
 )
 
 # Install pkg-config
-install(FILES "${CMAKE_CURRENT_BINARY_DIR}/libqrencode.pc"
+install(FILES "${CMAKE_CURRENT_BINARY_DIR}/libqrencode-ng.pc"
     DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig
 )
 
@@ -246,30 +253,30 @@ if(QRENCODE_BUILD_TOOLS)
 endif()
 
 # Install CMake package config
-install(EXPORT qrencode-targets
-    FILE qrencode-targets.cmake
-    NAMESPACE qrencode::
-    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/qrencode
+install(EXPORT qrencode-ng-targets
+    FILE qrencode-ng-targets.cmake
+    NAMESPACE qrencode-ng::
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/qrencode-ng
 )
 
 include(CMakePackageConfigHelpers)
 
 configure_package_config_file(
-    "${CMAKE_CURRENT_SOURCE_DIR}/cmake/qrencode-config.cmake.in"
-    "${CMAKE_CURRENT_BINARY_DIR}/qrencode-config.cmake"
-    INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/qrencode
+    "${CMAKE_CURRENT_SOURCE_DIR}/cmake/qrencode-ng-config.cmake.in"
+    "${CMAKE_CURRENT_BINARY_DIR}/qrencode-ng-config.cmake"
+    INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/qrencode-ng
 )
 
 write_basic_package_version_file(
-    "${CMAKE_CURRENT_BINARY_DIR}/qrencode-config-version.cmake"
+    "${CMAKE_CURRENT_BINARY_DIR}/qrencode-ng-config-version.cmake"
     VERSION ${PROJECT_VERSION}
     COMPATIBILITY SameMajorVersion
 )
 
 install(FILES
-    "${CMAKE_CURRENT_BINARY_DIR}/qrencode-config.cmake"
-    "${CMAKE_CURRENT_BINARY_DIR}/qrencode-config-version.cmake"
-    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/qrencode
+    "${CMAKE_CURRENT_BINARY_DIR}/qrencode-ng-config.cmake"
+    "${CMAKE_CURRENT_BINARY_DIR}/qrencode-ng-config-version.cmake"
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/qrencode-ng
 )
 
 # ============================================================================
@@ -317,6 +324,6 @@ message(STATUS " Install Paths:")
 message(STATUS "   Prefix ............................. ${CMAKE_INSTALL_PREFIX}")
 message(STATUS "   Binaries ........................... ${CMAKE_INSTALL_FULL_BINDIR}")
 message(STATUS "   Libraries .......................... ${CMAKE_INSTALL_FULL_LIBDIR}")
-message(STATUS "   Headers ............................ ${CMAKE_INSTALL_FULL_INCLUDEDIR}")
+message(STATUS "   Headers ............................ ${CMAKE_INSTALL_FULL_INCLUDEDIR}/qrencode-ng")
 message(STATUS "=============================================================================")
 message(STATUS "")

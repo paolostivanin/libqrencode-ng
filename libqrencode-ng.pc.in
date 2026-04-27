@@ -1,0 +1,12 @@
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+libdir=@libdir@
+includedir=@includedir@
+
+Name: libqrencode-ng
+Description: A QR Code encoding library (modernized fork of libqrencode)
+URL: https://github.com/paolostivanin/libqrencode-ng
+Version: @VERSION@
+Libs: -L${libdir} -lqrencode-ng
+Libs.private: @LIBPTHREAD@
+Cflags: -I${includedir}/qrencode-ng

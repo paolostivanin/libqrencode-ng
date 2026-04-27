@@ -207,12 +207,13 @@ static void usage(int help, int longopt, int status)
 {
 	FILE *out = status ? stderr : stdout;
 	fprintf(out,
-"qrencode version %s\n"
-"Copyright (C) 2006-2017 Kentaro Fukuchi\n", QRcode_APIVersionString());
+"qrencode-ng version %s\n"
+"Copyright (C) 2006-2017 Kentaro Fukuchi (original libqrencode)\n"
+"Copyright (C) 2025-2026 Paolo Stivanin and the libqrencode-ng contributors\n", QRcode_APIVersionString());
 	if(help) {
 		if(longopt) {
 			fprintf(out,
-"Usage: qrencode [-o FILENAME] [OPTION]... [STRING]\n"
+"Usage: qrencode-ng [-o FILENAME] [OPTION]... [STRING]\n"
 "Encode input data in a QR Code and save as a PNG or EPS image.\n\n"
 "  -h, --help   display the help message. -h displays only the help of short\n"
 "               options.\n\n"
@@ -285,7 +286,7 @@ static void usage(int help, int longopt, int status)
 			);
 		} else {
 			fprintf(out,
-"Usage: qrencode [-o FILENAME] [OPTION]... [STRING]\n"
+"Usage: qrencode-ng [-o FILENAME] [OPTION]... [STRING]\n"
 "Encode input data in a QR Code and save as a PNG or EPS image.\n\n"
 "  -h           display this message.\n"
 "  --help       display the usage of long options.\n"
@@ -308,13 +309,13 @@ static void usage(int help, int longopt, int status)
 "  -i           ignore case distinctions and use only upper-case characters.\n"
 "  -8           encode entire data in 8-bit mode. -k, -c and -i will be ignored.\n"
 "  -M           encode in a Micro QR Code.\n"
-"  -V           display the version number and copyrights of the qrencode.\n"
+"  -V           display the version number and copyrights of qrencode-ng.\n"
 "  --eci=NUMBER add an ECI header (assignment number 0-999999).\n"
 "  --fnc1-first add the FNC1 first-position mode indicator.\n"
 "  --fnc1-second=APPID add the FNC1 second-position mode indicator (0-255).\n"
 "  [STRING]     input data. If it is not specified, data will be taken from\n"
 "               standard input.\n\n"
-"  Try \"qrencode --help\" for more options.\n"
+"  Try \"qrencode-ng --help\" for more options.\n"
 			);
 		}
 	}
@@ -678,7 +679,7 @@ static int writeSVG(const QRcode *qrcode, const char *outfile)
 	*/
 
 	/* Vanity remark */
-	fprintf(fp, "<!-- Created with qrencode %s (https://fukuchi.org/works/qrencode/index.html) -->\n", QRcode_APIVersionString());
+	fprintf(fp, "<!-- Created with qrencode-ng %s (https://github.com/paolostivanin/libqrencode-ng) -->\n", QRcode_APIVersionString());
 
 	/* SVG code start */
 	fprintf(fp,
@@ -1627,7 +1628,7 @@ int main(int argc, char **argv)
 			case 0:
 				break;
 			default:
-				fprintf(stderr, "Try \"qrencode --help\" for more information.\n");
+				fprintf(stderr, "Try \"qrencode-ng --help\" for more information.\n");
 				exit(EXIT_FAILURE);
 		}
 	}
