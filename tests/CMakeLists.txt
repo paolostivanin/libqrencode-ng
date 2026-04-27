@@ -1,6 +1,6 @@
 add_library(common
     common.c common.h)
-target_link_libraries(common qrencode)
+target_link_libraries(common qrencode-ng)
 
 add_library(rscode
     rscode.c rscode.h)
@@ -53,7 +53,7 @@ if(TARGET ICONV::ICONV)
         decoder.c decoder.h 
         datachunk.c datachunk.h 
         rsecc_decoder.c rsecc_decoder.h)
-    target_link_libraries(decoder qrencode ICONV::ICONV)
+    target_link_libraries(decoder qrencode-ng ICONV::ICONV)
 
     MAKE_TEST(test_qrinput decoder)
     MAKE_TEST(test_qrspec decoder)

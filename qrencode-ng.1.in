@@ -1,20 +1,23 @@
-.TH QRENCODE 1 "Aug. 28, 2020" "qrencode @VERSION@"
+.TH QRENCODE-NG 1 "2026-01-08" "qrencode-ng @VERSION@"
 .SH NAME
-qrencode \- Encode input data in a QR Code and save as a PNG or EPS image.
+qrencode-ng \- Encode input data in a QR Code and save as a PNG or EPS image.
 .SH SYNOPSIS
-.B "qrencode"
+.B "qrencode-ng"
 [-o FILENAME]
 [OPTION]...
 [STRING]
 
 .SH DESCRIPTION
-Libqrencode is a library for encoding data in a QR Code symbol, a kind of 2D
+libqrencode-ng is a library for encoding data in a QR Code symbol, a kind of 2D
 symbology that can be scanned by handy terminals such as a mobile phone with
 CCD. The capacity of QR Code is up to 7000 digits or 4000 characters, and has
 high robustness.
 
-Qrencode is a utility software using libqrencode to encode string data in
-a QR Code and save as a PNG or EPS image.
+qrencode-ng is a utility that uses libqrencode-ng to encode string data in
+a QR Code and save it as a PNG, EPS, SVG, XPM or text-art image.
+
+It is the command-line tool of the libqrencode-ng project, a modernized fork
+of libqrencode by Kentaro Fukuchi.
 
 .SH OPTIONS
 .TP
@@ -100,7 +103,7 @@ too large for the specified version, the program exits with the
 code of 1.
 .TP
 .B \-V, \-\-version
-display the version number and copyrights of the qrencode.
+display the version number and copyrights of qrencode-ng.
 .TP
 .B \-\-verbose
 display verbose information to stderr.
@@ -122,24 +125,26 @@ Version 1 to 4.
 
 .SH EXAMPLES
 .TP
-.B qrencode \-l L \-v 1 \-o output.png 'Hello, world!'
+.B qrencode-ng \-l L \-v 1 \-o output.png 'Hello, world!'
 encode into a symbol version 1, level L.
 .TP
-.B qrencode \-iSv 1 \-\-output=output.png
+.B qrencode-ng \-iSv 1 \-\-output=output.png
 read standard input and encode it into a structured-appended symbols in
 case-insensitive mode.
 .TP
-.B qrencode \-S \-v 40 \-l L \-r bigfile.txt \-o output.png
+.B qrencode-ng \-S \-v 40 \-l L \-r bigfile.txt \-o output.png
 read input data from bigfile.txt and encode into a symbol version 40, level L.
 
 .SH AUTHOR
-Written by Kentaro Fukuchi.
+Originally written by Kentaro Fukuchi as part of libqrencode.
+Maintained as libqrencode-ng by Paolo Stivanin and contributors.
 
 .SH RESOURCES
 .TP
-Main Web Site: https://fukuchi.org/works/qrencode/
+Source code repository: https://github.com/paolostivanin/libqrencode-ng
 .TP
-Source code repository: https://github.com/fukuchi/libqrencode/
+Upstream libqrencode: https://github.com/fukuchi/libqrencode
 
 .SH COPYRIGHT
-Copyright (C) 2006-2018 Kentaro Fukuchi.
+Copyright (C) 2006-2018 Kentaro Fukuchi (original libqrencode).
+Copyright (C) 2025-2026 Paolo Stivanin and the libqrencode-ng contributors.
