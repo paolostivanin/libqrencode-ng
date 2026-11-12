@@ -191,6 +191,10 @@ static unsigned char *MQRspec_createFrame(int version)
 	int x, y;
 
 	width = mqrspecCapacity[version].width;
+	/* Never true for versions 1-4 (11x11 to 17x17), but it gives the compiler
+	 * a lower bound and avoids a false -Wstringop-overflow with GCC >= 15 and
+	 * _FORTIFY_SOURCE. */
+	if(width < 11) return NULL;
 	frame = (unsigned char *)malloc((size_t)(width * width));
 	if(frame == NULL) return NULL;
 
