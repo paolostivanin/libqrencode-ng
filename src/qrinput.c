@@ -316,7 +316,9 @@ static unsigned char QRinput_calcParity(QRinput *input)
 
 	list = input->head;
 	while(list != NULL) {
-		if(list->mode != QR_MODE_STRUCTURE) {
+		/* Only message data counts: skip structured-append, ECI and FNC1
+		 * entries. */
+		if(QRinput_isSplittableMode(list->mode)) {
 			for(i = list->size-1; i >= 0; i--) {
 				parity ^= list->data[i];
 			}

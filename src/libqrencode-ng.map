@@ -1,0 +1,62 @@
+/*
+ * libqrencode-ng exported ABI (SONAME libqrencode-ng.so.5).
+ *
+ * This list must match exactly the functions declared in src/qrencode.h.
+ * Everything else in the library is internal and hidden.
+ *
+ * Never modify the LIBQRENCODE_NG_5 node once 5.0.0 has shipped. New public
+ * functions go into a new node that inherits from it, e.g.:
+ *
+ *   LIBQRENCODE_NG_5.1 {
+ *       global:
+ *           QRnew_function;
+ *   } LIBQRENCODE_NG_5;
+ */
+LIBQRENCODE_NG_5 {
+    global:
+        /* Input data (qrinput.c) */
+        QRinput_new;
+        QRinput_new2;
+        QRinput_newMQR;
+        QRinput_append;
+        QRinput_appendECIheader;
+        QRinput_getVersion;
+        QRinput_setVersion;
+        QRinput_getErrorCorrectionLevel;
+        QRinput_setErrorCorrectionLevel;
+        QRinput_setVersionAndErrorCorrectionLevel;
+        QRinput_free;
+        QRinput_check;
+        QRinput_Struct_new;
+        QRinput_Struct_setParity;
+        QRinput_Struct_appendInput;
+        QRinput_Struct_free;
+        QRinput_splitQRinputToStruct;
+        QRinput_Struct_insertStructuredAppendHeaders;
+        QRinput_setFNC1First;
+        QRinput_setFNC1Second;
+
+        /* QRcode output (qrencode.c) */
+        QRcode_encodeInput;
+        QRcode_encodeString;
+        QRcode_encodeString8bit;
+        QRcode_encodeStringMQR;
+        QRcode_encodeString8bitMQR;
+        QRcode_encodeData;
+        QRcode_encodeDataMQR;
+        QRcode_free;
+        QRcode_encodeInputStructured;
+        QRcode_encodeStringStructured;
+        QRcode_encodeString8bitStructured;
+        QRcode_encodeDataStructured;
+        QRcode_List_size;
+        QRcode_List_free;
+
+        /* System utilities (qrencode.c) */
+        QRcode_APIVersion;
+        QRcode_APIVersionString;
+        QRcode_clearCache;
+
+    local:
+        *;
+};

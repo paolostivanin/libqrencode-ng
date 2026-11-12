@@ -6,6 +6,8 @@ project(libqrencode-ng
     LANGUAGES C
 )
 
+include(GNUInstallDirs)
+
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_C_EXTENSIONS ON)
@@ -28,6 +30,27 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
     set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release" "MinSizeRel" "RelWithDebInfo")
 endif()
 
+# Instrumentation applies to every target (library, CLI and tests), otherwise
+# executables fail to link against an instrumented library or abort at start.
+if(QRENCODE_ENABLE_ASAN)
+    add_compile_options(-fsanitize=address -fno-omit-frame-pointer -fno-optimize-sibling-calls)
+    add_link_options(-fsanitize=address)
+endif()
+if(QRENCODE_ENABLE_UBSAN)
+    add_compile_options(-fsanitize=undefined -fno-sanitize-recover=all)
+    add_link_options(-fsanitize=undefined)
+endif()
+if(QRENCODE_ENABLE_COVERAGE)
+    add_compile_options(--coverage)
+    add_link_options(--coverage)
+endif()
+if(QRENCODE_ENABLE_GPROF)
+    add_compile_options(-pg)
+    add_link_options(-pg)
+endif()
+
+set(QRENCODE_WARNING_FLAGS "$<$<C_COMPILER_ID:GNU,Clang>:-Wall;-Wextra;-Wpedantic>")
+
 # Module path
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
@@ -43,22 +66,15 @@ if(QRENCODE_ENABLE_PNG)
     endif()
 endif()
 
-find_package(Iconv)
+if(QRENCODE_BUILD_TESTS)
+    find_package(Iconv)
+endif()
 
 # Check for system headers
 include(CheckIncludeFile)
 include(CheckFunctionExists)
 
-check_include_file(dlfcn.h HAVE_DLFCN_H)
-check_include_file(inttypes.h HAVE_INTTYPES_H)
-check_include_file(memory.h HAVE_MEMORY_H)
-check_include_file(stdint.h HAVE_STDINT_H)
-check_include_file(stdlib.h HAVE_STDLIB_H)
-check_include_file(strings.h HAVE_STRINGS_H)
-check_include_file(string.h HAVE_STRING_H)
-check_include_file(getopt.h HAVE_GETOPT_H)
 check_include_file(sys/time.h HAVE_SYS_TIME_H)
-check_include_file(time.h HAVE_TIME_H)
 check_include_file(pthread.h HAVE_PTHREAD_H)
 
 check_function_exists(strdup HAVE_STRDUP)
@@ -80,6 +96,7 @@ set(QRENCODE_SOURCES
 )
 
 set(QRENCODE_HEADERS
+    src/qrencode.h
     src/qrencode_inner.h
     src/qrinput.h
     src/bitstream.h
@@ -95,72 +112,71 @@ set(QRENCODE_PUBLIC_HEADERS
     src/qrencode.h
 )
 
+# Absolute paths so tests/ can build its own copy of the library.
+list(TRANSFORM QRENCODE_SOURCES PREPEND "${CMAKE_CURRENT_SOURCE_DIR}/")
+list(TRANSFORM QRENCODE_HEADERS PREPEND "${CMAKE_CURRENT_SOURCE_DIR}/")
+
+set(QRENCODE_VERSION_DEFS
+    MAJOR_VERSION=${PROJECT_VERSION_MAJOR}
+    MINOR_VERSION=${PROJECT_VERSION_MINOR}
+    MICRO_VERSION=${PROJECT_VERSION_PATCH}
+    VERSION="${PROJECT_VERSION}"
+)
+set(QRENCODE_COMMON_PRIVATE_DEFS
+    $<$<BOOL:${HAVE_STRDUP}>:HAVE_STRDUP=1>
+    $<$<BOOL:${CMAKE_USE_PTHREADS_INIT}>:HAVE_LIBPTHREAD=1>
+)
+
+# Production objects, shared by the library and the CLI. The CLI uses a few
+# internal functions (e.g. Split_splitStringToQRinput) which the shared
+# library does not export.
+add_library(qrencode-ng-objects OBJECT ${QRENCODE_SOURCES} ${QRENCODE_HEADERS})
+set_target_properties(qrencode-ng-objects PROPERTIES POSITION_INDEPENDENT_CODE ON)
+target_include_directories(qrencode-ng-objects PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/src")
+target_compile_definitions(qrencode-ng-objects
+    PRIVATE
+        ${QRENCODE_VERSION_DEFS}
+        STATIC_IN_RELEASE=static
+        ${QRENCODE_COMMON_PRIVATE_DEFS}
+)
+target_compile_options(qrencode-ng-objects PRIVATE ${QRENCODE_WARNING_FLAGS})
+if(CMAKE_USE_PTHREADS_INIT)
+    target_link_libraries(qrencode-ng-objects PUBLIC Threads::Threads)
+endif()
+
+# Only the functions declared in qrencode.h are exported from the shared
+# library, under the LIBQRENCODE_NG_5 symbol version.
+set(QRENCODE_NG_VERSION_SCRIPT "${CMAKE_CURRENT_SOURCE_DIR}/src/libqrencode-ng.map")
+
 if(QRENCODE_BUILD_SHARED)
-    add_library(qrencode-ng SHARED ${QRENCODE_SOURCES} ${QRENCODE_HEADERS})
+    add_library(qrencode-ng SHARED $<TARGET_OBJECTS:qrencode-ng-objects>)
     set_target_properties(qrencode-ng PROPERTIES
         VERSION ${PROJECT_VERSION}
         SOVERSION ${PROJECT_VERSION_MAJOR}
-        OUTPUT_NAME qrencode-ng
     )
+    target_link_options(qrencode-ng PRIVATE
+        "LINKER:--version-script=${QRENCODE_NG_VERSION_SCRIPT}"
+        "LINKER:--no-undefined-version"
+    )
+    set_property(TARGET qrencode-ng APPEND PROPERTY LINK_DEPENDS "${QRENCODE_NG_VERSION_SCRIPT}")
 else()
-    add_library(qrencode-ng STATIC ${QRENCODE_SOURCES} ${QRENCODE_HEADERS})
-    set_target_properties(qrencode-ng PROPERTIES OUTPUT_NAME qrencode-ng)
+    add_library(qrencode-ng STATIC $<TARGET_OBJECTS:qrencode-ng-objects>)
 endif()
+set_target_properties(qrencode-ng PROPERTIES
+    OUTPUT_NAME qrencode-ng
+    LINKER_LANGUAGE C
+)
 
 add_library(qrencode-ng::qrencode-ng ALIAS qrencode-ng)
 
-# Target properties
 target_include_directories(qrencode-ng
     PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>
         $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/qrencode-ng>
 )
 
-target_compile_definitions(qrencode-ng
-    PUBLIC
-        MAJOR_VERSION=${PROJECT_VERSION_MAJOR}
-        MINOR_VERSION=${PROJECT_VERSION_MINOR}
-        MICRO_VERSION=${PROJECT_VERSION_PATCH}
-        VERSION="${PROJECT_VERSION}"
-        $<$<BOOL:${QRENCODE_BUILD_TESTS}>:WITH_TESTS>
-    PRIVATE
-        HAVE_SDL=0
-        $<$<NOT:$<BOOL:${QRENCODE_BUILD_TESTS}>>:STATIC_IN_RELEASE=static>
-        $<$<BOOL:${QRENCODE_BUILD_TESTS}>:STATIC_IN_RELEASE=>
-        $<$<BOOL:${HAVE_STRDUP}>:HAVE_STRDUP=1>
-        $<$<BOOL:${CMAKE_USE_PTHREADS_INIT}>:HAVE_LIBPTHREAD=1>
-)
-
-# Compiler flags
-target_compile_options(qrencode-ng
-        PRIVATE
-        $<$<C_COMPILER_ID:GNU,Clang>:-Wall -Wextra -Wpedantic>
-        $<$<BOOL:${QRENCODE_ENABLE_GPROF}>:-pg>
-        $<$<BOOL:${QRENCODE_ENABLE_COVERAGE}>:--coverage>
-        $<$<BOOL:${QRENCODE_ENABLE_ASAN}>:-fsanitize=address -fno-omit-frame-pointer -fno-optimize-sibling-calls>
-        $<$<BOOL:${QRENCODE_ENABLE_UBSAN}>:-fsanitize=undefined -fno-sanitize-recover=all>
-)
-
-# Linker flags
-if(QRENCODE_ENABLE_ASAN)
-    target_link_options(qrencode-ng PRIVATE -fsanitize=address)
-endif()
-
-if(QRENCODE_ENABLE_UBSAN)
-    target_link_options(qrencode-ng PRIVATE -fsanitize=undefined)
-endif()
-
-if(QRENCODE_ENABLE_COVERAGE)
-    target_link_options(qrencode-ng PRIVATE --coverage)
-endif()
-
-if(QRENCODE_ENABLE_GPROF)
-    target_link_options(qrencode-ng PRIVATE -pg)
-endif()
-
-# Link dependencies
 if(CMAKE_USE_PTHREADS_INIT)
-    target_link_libraries(qrencode-ng PUBLIC Threads::Threads)
+    target_link_libraries(qrencode-ng PRIVATE Threads::Threads)
 endif()
 
 
@@ -172,7 +188,10 @@ if(QRENCODE_BUILD_TOOLS)
     add_executable(qrenc src/qrenc.c)
     set_target_properties(qrenc PROPERTIES OUTPUT_NAME qrencode-ng)
 
-    target_link_libraries(qrenc PRIVATE qrencode-ng)
+    # Linked against the production objects rather than the shared library
+    # because the CLI uses internal (non-exported) functions.
+    target_link_libraries(qrenc PRIVATE qrencode-ng-objects)
+    target_compile_options(qrenc PRIVATE ${QRENCODE_WARNING_FLAGS})
 
     if(QRENCODE_ENABLE_PNG AND PNG_FOUND)
         target_compile_definitions(qrenc PRIVATE HAVE_PNG=1)
@@ -194,13 +213,19 @@ endif()
 # Installation
 # ============================================================================
 
-include(GNUInstallDirs)
-
 # Configure pkg-config file
 set(prefix "${CMAKE_INSTALL_PREFIX}")
 set(exec_prefix "\${prefix}")
-set(libdir "\${prefix}/${CMAKE_INSTALL_LIBDIR}")
-set(includedir "\${prefix}/${CMAKE_INSTALL_INCLUDEDIR}")
+if(IS_ABSOLUTE "${CMAKE_INSTALL_LIBDIR}")
+    set(libdir "${CMAKE_INSTALL_LIBDIR}")
+else()
+    set(libdir "\${exec_prefix}/${CMAKE_INSTALL_LIBDIR}")
+endif()
+if(IS_ABSOLUTE "${CMAKE_INSTALL_INCLUDEDIR}")
+    set(includedir "${CMAKE_INSTALL_INCLUDEDIR}")
+else()
+    set(includedir "\${prefix}/${CMAKE_INSTALL_INCLUDEDIR}")
+endif()
 set(VERSION "${PROJECT_VERSION}")
 if(CMAKE_USE_PTHREADS_INIT)
     set(LIBPTHREAD "${CMAKE_THREAD_LIBS_INIT}")
@@ -260,6 +285,14 @@ install(EXPORT qrencode-ng-targets
 )
 
 include(CMakePackageConfigHelpers)
+
+# A static libqrencode-ng carries $<LINK_ONLY:Threads::Threads> in its exported
+# interface; a shared one does not.
+if(NOT QRENCODE_BUILD_SHARED AND CMAKE_USE_PTHREADS_INIT)
+    set(QRENCODE_NG_STATIC_NEEDS_THREADS ON)
+else()
+    set(QRENCODE_NG_STATIC_NEEDS_THREADS OFF)
+endif()
 
 configure_package_config_file(
     "${CMAKE_CURRENT_SOURCE_DIR}/cmake/qrencode-ng-config.cmake.in"

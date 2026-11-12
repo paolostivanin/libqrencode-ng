@@ -29,13 +29,13 @@ fixes don't need a prior discussion.
 1. Fork the repository and create a branch off `master`.
 2. Make focused commits with descriptive messages. One logical change per
    commit.
-3. Ensure the build is warning-clean with the default flags
+3. Ensure the library and CLI build warning-clean with the default flags
    (`-Wall -Wextra -Wpedantic`) under both GCC and Clang if possible.
 4. Run the test suite locally:
 
        cmake -S . -B build -DQRENCODE_BUILD_TESTS=ON
        cmake --build build -j
-       ctest --test-dir build --output-on-failure
+       (cd build && ctest --output-on-failure)
 
 5. If your change touches encoding logic, please also run an
    AddressSanitizer build:
@@ -43,19 +43,19 @@ fixes don't need a prior discussion.
        cmake -S . -B build-asan -DQRENCODE_BUILD_TESTS=ON \
              -DQRENCODE_ENABLE_ASAN=ON -DQRENCODE_ENABLE_UBSAN=ON
        cmake --build build-asan -j
-       ctest --test-dir build-asan --output-on-failure
+       (cd build-asan && ctest --output-on-failure)
 
 6. Open a pull request against `master`. Reference any related issue.
 
 ## Coding style
 
 * C11. Use `bool`, `stdint` types where appropriate.
-* Match the surrounding style: 4-space indentation in new code, K&R-style
-  braces, short and descriptive identifiers.
+* Match the surrounding style: indent with tabs (as the existing code does),
+  K&R-style braces, short and descriptive identifiers.
 * Avoid introducing new mandatory dependencies.
 * Public API changes (anything in `src/qrencode.h`) require an explicit
   discussion in the issue tracker first.
-* Don't add platform-specific code paths for Windows or macOS — this fork
+* Don't add platform-specific code paths for Windows or macOS - this fork
   intentionally targets Linux and BSD only.
 
 ## Commit messages

@@ -1,7 +1,7 @@
 /**
  * qrencode - QR Code encoder
  *
- * Copyright (C) 2006-2017 Kentaro Fukuchi <kentaro@fukuchi.org>
+ * Copyright (C) 2006-2018 Kentaro Fukuchi <kentaro@fukuchi.org>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -19,7 +19,7 @@
  */
 
 /** \mainpage
- * Libqrencode is a library for encoding data in a QR Code symbol, a kind of 2D
+ * libqrencode-ng is a library for encoding data in a QR Code symbol, a kind of 2D
  * symbology.
  *
  * \section encoding Encoding
@@ -61,7 +61,7 @@
  * symbol of the specified version.
  *
  * \section structured Structured append
- * Libqrencode can generate "Structured-appended" symbols that enables to split
+ * libqrencode-ng can generate "Structured-appended" symbols that enables to split
  * a large data set into mulitple QR codes. A QR code reader concatenates
  * multiple QR code symbols into a string.
  * Just like QRcode_encodeString(), you can use QRcode_encodeStringStructured()

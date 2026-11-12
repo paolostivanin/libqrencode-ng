@@ -2,8 +2,7 @@
 
 ## Supported versions
 
-Only the latest released version of `libqrencode-ng` is supported with
-security fixes.
+Only the latest 5.x release of `libqrencode-ng` receives security fixes.
 
 | Version | Supported |
 | ------- | --------- |
@@ -55,9 +54,10 @@ In scope:
 
 Out of scope:
 
-* DoS attacks that require obviously abusive parameters (e.g. passing
-  `-s 1000000` to the CLI). Validate parameters at the application
-  boundary; see the warning in [`README.md`](README.md).
+* DoS attacks that require obviously abusive parameters (e.g. very large
+  `-s`/`-m` values within the accepted range of the CLI). Validate
+  parameters at the application boundary; see the warning in
+  [`README.md`](README.md).
 * Issues that only reproduce on platforms not supported by this fork
   (Windows, macOS).
 * Issues in third-party dependencies (`libpng`, `iconv`); please report

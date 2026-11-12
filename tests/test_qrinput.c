@@ -827,6 +827,35 @@ static void test_parity2(void)
 	QRinput_Struct_free(s);
 }
 
+static void test_parity_eci(void)
+{
+	QRinput *input;
+	QRinput_Struct *s;
+	const char *text = "an example of four Structured Append symbols,";
+	unsigned char p1, p2;
+	int i, len;
+
+	testStart("Testing parity calc.(split, with ECI header)");
+	input = QRinput_new2(1, QR_ECLEVEL_L);
+	QRinput_appendECIheader(input, 26);
+	QRinput_append(input, QR_MODE_8, strlen(text), (unsigned char *)text);
+	s = QRinput_splitQRinputToStruct(input);
+	assert_nonnull(s, "QRinput_splitQRinputToStruct() failed.\n");
+	if(s != NULL) {
+		p1 = s->parity;
+
+		p2 = 0;
+		len = strlen(text);
+		for(i=0; i<len; i++) {
+			p2 ^= text[i];
+		}
+		assert_equal(p1, p2, "Parity numbers didn't match. (%02x should be %02x).\n", p1, p2);
+	}
+	testFinish();
+	QRinput_free(input);
+	QRinput_Struct_free(s);
+}
+
 static void test_null_free(void)
 {
 	testStart("Testing free NULL pointers");
@@ -919,6 +948,7 @@ static void test_QRinput_getErrorCorrectionLevel(void)
 	level = QRinput_getErrorCorrectionLevel(input);
 	assert_equal(level, QR_ECLEVEL_H, "QRinput_getErrorCorrectionLevel() fails to return expected level.\n");
 	testFinish();
+	QRinput_free(input);
 }
 
 static void test_mqr_new(void)
@@ -1130,7 +1160,7 @@ static void test_encodeFNC1Second(void)
 
 int main()
 {
-	int tests = 44;
+	int tests = 45;
 	testInit(tests);
 
 	test_encodeNumeric();
@@ -1162,6 +1192,7 @@ int main()
 	test_struct_singlestructure();
 	test_parity();
 	test_parity2();
+	test_parity_eci();
 	test_null_free();
 	test_estimateVersionBoundaryCheck();
 	test_QRinput_new_invalid();
