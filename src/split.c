@@ -39,17 +39,6 @@
 #define isdigit(__c__) ((unsigned char)((signed char)(__c__) - '0') < 10)
 #define isalnum(__c__) (QRinput_lookAnTable(__c__) >= 0)
 
-#if !HAVE_STRDUP
-#undef strdup
-char *strdup(const char *s)
-{
-	size_t len = strlen(s) + 1;
-	void *newstring = malloc(len);
-	if(newstring == NULL) return NULL;
-	return (char *)memcpy(newstring, s, len);
-}
-#endif
-
 static QRencodeMode Split_identifyMode(const char *string, QRencodeMode hint)
 {
 	unsigned char c, d;

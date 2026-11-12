@@ -1,5 +1,7 @@
 # libqrencode-ng - a fast and compact QR Code encoding library
 
+[![CI](https://github.com/paolostivanin/libqrencode-ng/actions/workflows/ci.yml/badge.svg)](https://github.com/paolostivanin/libqrencode-ng/actions/workflows/ci.yml)
+
 `libqrencode-ng` is a community-maintained fork of the original
 [libqrencode](https://github.com/fukuchi/libqrencode) by Kentaro Fukuchi,
 modernized for current Linux and BSD systems.

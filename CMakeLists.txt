@@ -72,12 +72,9 @@ endif()
 
 # Check for system headers
 include(CheckIncludeFile)
-include(CheckFunctionExists)
 
 check_include_file(sys/time.h HAVE_SYS_TIME_H)
 check_include_file(pthread.h HAVE_PTHREAD_H)
-
-check_function_exists(strdup HAVE_STRDUP)
 
 # ============================================================================
 # Main library target
@@ -123,7 +120,6 @@ set(QRENCODE_VERSION_DEFS
     VERSION="${PROJECT_VERSION}"
 )
 set(QRENCODE_COMMON_PRIVATE_DEFS
-    $<$<BOOL:${HAVE_STRDUP}>:HAVE_STRDUP=1>
     $<$<BOOL:${CMAKE_USE_PTHREADS_INIT}>:HAVE_LIBPTHREAD=1>
 )
 

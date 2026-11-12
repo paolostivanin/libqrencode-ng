@@ -1,0 +1,117 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  linux:
+    name: Linux ${{ matrix.cc }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        cc: [gcc, clang]
+    env:
+      CC: ${{ matrix.cc }}
+    steps:
+      - uses: actions/checkout@v7
+      - name: Install dependencies
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends cmake clang libpng-dev pkg-config
+      - name: Configure
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DQRENCODE_BUILD_TESTS=ON -DCMAKE_C_FLAGS=-Werror
+      - name: Build
+        run: cmake --build build -j
+      - name: Test
+        run: cd build && ctest --output-on-failure
+      - name: Check exported ABI
+        run: .github/scripts/check-abi.sh build/libqrencode-ng.so.5 src/qrencode.h
+      - name: Tests ON and OFF ship the same library
+        run: |
+          cmake -S . -B build-notests -DCMAKE_BUILD_TYPE=Release
+          cmake --build build-notests -j
+          cmake --install build --prefix "$PWD/stage-tests"
+          cmake --install build-notests --prefix "$PWD/stage-notests"
+          diff -r stage-tests stage-notests
+      - name: Consumer smoke test
+        run: .github/scripts/consumer-test.sh stage-tests
+
+  sanitizers:
+    name: ASan+UBSan ${{ matrix.cc }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        cc: [gcc, clang]
+    env:
+      CC: ${{ matrix.cc }}
+    steps:
+      - uses: actions/checkout@v7
+      - name: Install dependencies
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends cmake clang libpng-dev
+      - name: Configure
+        run: >
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DQRENCODE_BUILD_TESTS=ON
+          -DQRENCODE_ENABLE_ASAN=ON -DQRENCODE_ENABLE_UBSAN=ON
+      - name: Build
+        run: cmake --build build -j
+      - name: Test
+        run: cd build && ctest --output-on-failure
+
+  static:
+    name: Static library
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Install dependencies
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends cmake libpng-dev pkg-config
+      - name: Configure
+        run: cmake -S . -B build -DQRENCODE_BUILD_SHARED=OFF -DQRENCODE_BUILD_TESTS=ON -DCMAKE_C_FLAGS=-Werror
+      - name: Build
+        run: cmake --build build -j
+      - name: Test
+        run: cd build && ctest --output-on-failure
+      - name: Install
+        run: cmake --install build --prefix "$PWD/stage"
+      - name: Consumer smoke test
+        run: .github/scripts/consumer-test.sh stage static
+
+  minimal:
+    name: CMake 3.16, no PNG
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: jwlawson/actions-setup-cmake@v2
+        with:
+          cmake-version: '3.16.x'
+      - name: Configure
+        run: cmake -S . -B build -DQRENCODE_ENABLE_PNG=OFF -DQRENCODE_BUILD_TESTS=ON -DCMAKE_C_FLAGS=-Werror
+      - name: Build
+        run: cmake --build build -j 4
+      - name: Test
+        run: cd build && ctest --output-on-failure
+
+  freebsd:
+    name: FreeBSD
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Build and test
+        uses: vmactions/freebsd-vm@v1
+        with:
+          usesh: true
+          prepare: pkg install -y cmake png pkgconf
+          run: |
+            cmake -S . -B build -DQRENCODE_BUILD_TESTS=ON
+            cmake --build build -j 2
+            cd build && ctest --output-on-failure
